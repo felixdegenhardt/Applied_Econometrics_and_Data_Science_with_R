@@ -27,9 +27,9 @@ Please install the following:
 The final version of the code and other course materials will be uploaded to both Moodle and GitHub.
 
 ## Structure
-For this semester’s course, we will meet each week on `Wednesdays, 12:15–13:45 in 3.06.S27' .
+For this semester’s course, we will meet each week on Wednesdays, 12:15–13:45 in 3.06.S27.
 
-In each session, you will get input into some aspects of applied econometrics and data science and apply them right away. One of the instructors will code live in class, while the other is available for technical assistance. Please bring your laptop to each session and look at the content before class.
+In each session, you will get input into some aspects of applied econometrics and data science and apply them right away. One of the instructors will code live in class, while the other is available for technical assistance.
 
 Please bring your laptop to the seminars and have a look at the content before each session.
 
