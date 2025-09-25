@@ -34,6 +34,81 @@ In each session, you will get input into some aspects of applied econometrics an
 Please bring your laptop to the seminars and have a look at the content before each session.
 
 ## Schedule 
+
+Here, you will find the detailed course content:
+
+```{r, echo=FALSE}
+library(knitr)
+library(kableExtra)
+
+# Create the data
+dates <- c("15th October 2025", 
+           "22nd October 2025", 
+           "29th October 2025", 
+           "5th November 2025", 
+           "12th November 2025", 
+           "19th November 2025", 
+           "26th November 2025", 
+           "3rd December 2025",
+           "10th December 2025",
+           "17th December 2025",
+           "7th January 2026",
+           "14th January 2026",
+           "21st January 2026",
+           "28th January 2026",
+           "4th February 2026")
+
+topics <- c("Introduction to R, R-Markdown and Github",
+            "Data Wrangling and the `tidyverse`",
+            "Data Wrangling and the `tidyverse`",
+            "Supervised Machine Learning",
+            "Supervised Machine Learning",
+            "Automations in R",
+            "Automations in R",
+            "Q&A and coding practicing",
+            "The `ggplot2` package",
+            "The `ggplot2` package",
+            # "Spatial economics and maps",
+            "Q&A and coding practicing",
+            "Progress talks & how to present your results in a poster",
+            # "How to present your results in a poster",
+            "Q&A and coding practicing",
+            "Final Poster Presentations??", 
+            "")
+
+instructor <- c("Sophie & Felix", 
+                "Felix",
+                "Felix", 
+                "Sophie",
+                "Sophie",
+                "Felix",
+                "Felix",
+                "Sophie & Felix",
+                "Sophie",
+                "Sophie",
+                "Sophie & Felix",
+                "Felix",
+                # "Felix",
+                "Sophie & Felix",
+                "Sophie & Felix", 
+                "")
+
+notes <- c("Course registration",
+          "Upload of Topics & Team Assignment \n Final Course Registration on PULS until November XYth at the lastest",
+          "Assignment of Topics",
+           rep("", 5),
+          "Submission of Midterm Code until December 15, 12 pm!",
+          rep("", 6)
+)
+
+# Combine into a data frame
+schedule <- data.frame(Date = dates, Topic = topics, Instructor = instructor, Notes = notes)
+
+# Create the table
+kable(schedule, align = "l") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
 ## Instructors 
 
 * Felix Degenhardt (email)
