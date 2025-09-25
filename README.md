@@ -1,4 +1,4 @@
-# Applied Econometrics and Data_Science with R
+# Applied Econometrics and Data Science with R
 
 ## Welcome!
 
@@ -21,11 +21,12 @@ To start smoothly and solve potential technical problems early, please make sure
 ## Installation checklist
 Please install the following:
 
-R (latest version)
-RStudio Desktop
-GitHub Desktop
-Create a GitHub account
-Join the GitHub classroom/repository via this link: …
+* [R (latest version)](https://cran.r-project.org)
+* [RStudio Desktop](https://posit.co/download/rstudio-desktop/)
+* [GitHub Desktop](https://github.com/apps/desktop)
+* [Create a GitHub account](https://github.com)
+* Join the GitHub classroom/repository via this link: …
+* 
 The final version of the code and other course materials will be uploaded to both Moodle and GitHub.
 
 ## Structure
