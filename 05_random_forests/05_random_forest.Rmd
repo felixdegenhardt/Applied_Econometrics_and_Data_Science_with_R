@@ -1,0 +1,840 @@
+---
+title: "Applied Econometrics and Data Science with R - Random Forests"
+author: "Felix Degenhardt & Sophie Wagner"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: flatly
+    highlight: tango
+    toc: true
+    toc_float: true
+    df_print: paged
+  cache: false
+---
+
+```{css, echo=FALSE}
+.task-box {
+  background-color: #e8f4f8;
+  border-left: 5px solid #2c7fb8;
+  padding: 20px;
+  margin: 20px 0;
+  border-radius: 5px;
+}
+```
+
+
+**Goal for today:** train, build, and evaluate random forest models using data from the student survey. 
+
+
+**What we’ll do:**
+
+  * Build and visualize a decision tree: split criteria, depth, overfitting demonstration
+  * Introduce bagging: bootstrap samples, aggregate predictions, reduced variance
+  * Train a random forest: tune mtry, num.trees, min.node.size; use OOB error
+  * Evaluate models: classification accuracy / AUC or RMSE/MAE (for regression)
+  * Inspect variable importance and discuss feature effects
+
+
+The most important packages in this session will be the `rpart` package for the decision trees as well as `ranger` for the random forest models. 
+
+We will use some functions from the `ggplot2` package that we have not yet introduced. We will have two session on this package later.
+
+# Introduction to decision trees
+
+![Source: Victor Doval; https://dribbble.com/shots/1558612-Growing-Tree](figures/tree.gif)
+Decision trees are simple yet powerful tools that recursively split data based on the predictor values to make predictions.
+They extract useful and easy-to-interpret information, even from large data sets and they have been widely used
+in several disciplines. Both discrete and continuous variables can be used either
+as dependent variables or predictors. 
+
+We will create two examples: one for a classification task (i.e. when the dependent variable is binary or categorical) and one for a regression task (i.e. when the dependent variable is continuous). For that, we use the student survey: 
+
+**1. We classify** if a student is risk affine or risk averse based in student characterisitcs. The `risk_affine`variable is binary and takes on the value 1, if a student has a higher than average risk affinity score.
+
+**2. We predict** the expected exam grade `statistiknote_w1` based on student characteristics. 
+
+## Data preparation
+
+```{r, warning = F, message = F}
+library(rpart)
+library(rpart.plot)
+library(caret)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(patchwork)
+```
+
+To be able to directly dive into the maschine learning topic, we cut the data preparation short and drop all missing observations in the variables that we want to use. 
+
+```{r}
+data <- read.csv("../00_data/survey/survey_processed.csv")
+
+
+data <- data %>%
+  select(-c(id, has_siblings, avg_mathenote, einkommen, age, risiko, geburtsbundesland_name)) %>% 
+  drop_na() %>% # just for illustrational purposes, never just drop missings! 
+  mutate_at(c("female", "risk_affine", "alkohol", "sport", "sidejob", "organ_donor", "erstfach_name"), as.factor)
+
+```
+
+
+Decision trees use a greedy algorithm for constructing the tree, meaning that at each step, the algorithm makes the optimal split decision based only on the current state of the tree, without considering the impact of future splits. This local optimization approach helps in computational efficiency, but may result in a suboptimal overall tree structure.
+
+A decision tree builds its structure through binary partitions. At each decision node, the data is split into two parts based on a feature and a threshold value. This is done repeatedly, creating a set of decision rules that lead to the terminal leaf nodes. Each leaf node contains a subset of the data that is as similar as possible based on the outcome variable.
+
+### How do we decide if a split is good? {.unlisted .unnumbered}
+
+The objective of a decision tree is to minimize the *dissimilarity* or *impurity* of the observations in each leaf node. In a classification problem, dissimilarity can be measured using metrics such as *Gini impurity* or *entropy*. For regression tasks, the dissimilarity is typically measured by the *variance* within the leaf node.
+
+### Gini impurity {.unlisted .unnumbered}
+Classification trees minimize (by default) the *gini impurity*. This is a measure of how often a randomly chosen element from the set would be incorrectly classified if it were labeled according to the distribution of labels in the set. 
+
+- Formula: 
+
+$$
+\begin{aligned}
+Gini = 1 - \sum(p_1+p_2)^2,
+\end{aligned}
+$$
+where $p_i$ is the proportion of elements in the node that belong to class $i \in {1,2}$.
+
+- Intuition: If all elements in a node belong to one class, $p_i = 1$ for one class and $0$ for others, so the Gini impurity is 0. If the elements are evenly distributed among classes, the Gini impurity approaches its maximum value, indicating high impurity. 
+
+### Variance reduction {.unlisted .unnumbered}
+For regression tasks, decision trees use variance reduction to evaluate splits. Variance measures how much the target values deviate from the mean. Splitting the data should reduce this variance, meaning the outcome values within each subset are more consistent.
+
+- Formula: The variance of a set of values $y_1, y_2, ..., y_n$ is:
+$$
+\begin{aligned}
+Var(S) = \frac{1}{n} \sum_{i=1}^{n} (y_i - \bar{y})^2,
+\end{aligned}
+$$
+where $\bar{y}$ is the mean of the outcome value. 
+
+When a split occurs the variance reduction is defined as: 
+
+$$
+\begin{aligned}
+Variance\ Reduction = Var(S) - \left( \frac{|S_1|}{|S|} Var(S_1) + \frac{|S_2|}{|S|} Var(S_2) \right),
+\end{aligned}
+$$
+where $S_1$ and $S_2$ are the two subsets created by the split, and $\vert S \vert$ represents the number of instances.
+
+- Intuition: If a split results in subsets with much lower variance, it’s a good split, because the predictions within each subset will be more accurate. A high variance before splitting means the values are spread out, and a reduction in variance means the tree is fitting the data better.
+
+
+## Classification
+We build an example tree using the `risk_affine` variable as our target. The goal is to construct a tree that classifies whether a student is risk affine (`risk_affine = 1`) or risk averse (`risk_affine = 0`), based on selected predictor variables. We use the `rpart()` function to build the tree and specify that we want a classification tree. 
+
+
+```{r}
+# Classification decision tree
+class_tree <- rpart(risk_affine ~ female + statistiknote_w1 + 
+                                  fachsemester + erstfach_name + 
+                                  alkohol, data = data, method = "class")
+```
+
+
+Using the `rpart.plot()` function, we can visualize the tree and see which predictor was chosen for each split and each cutoff threshhold.
+```{r}
+# Plot the decision tree
+rpart.plot(class_tree, main = "Decision Tree: Classification")
+```
+
+What we learn from the plot: 
+
+- 1. The first row in the displayed circles indicate the predicted class (`risk_affine = 0`or `risk_affine = 1`). This is also reflected by the colors. The second row in the circles 
+- 2. The second row prints the predicted probability of being risk affine. 
+- 3. The third row gives you the percentage of observations in the node.
+
+
+The splits are displayed, such that the `yes` is on the left side and the `no` on the right side. We plot the same graph using a different type for a visualization.
+
+```{r}
+# Plot the decision tree with explicit splits
+rpart.plot(class_tree, main = "Decision Tree: Classification", type = 5)
+```
+
+## Regression
+In the next example, we build a regression tree, which means that our target variable is continuous. The goal is to model the expected exam grade `statistiknote_w1` as a function of selected predictor variables. The tree then seeks to minimize the variance in the target variable for each leaf node, ensuring that observations in each leaf are as similar as possible. We specify the method to be `anova`. 
+
+```{r}
+# Regression desicion tree
+reg_tree <- rpart(statistiknote_w1 ~ female + risk_affine + fachsemester + 
+                                     erstfach_name + alkohol, 
+                                     data = data, method = "anova")
+```
+
+Again, we can plot our decision tree. 
+
+```{r}
+# Plot the regression tree
+rpart.plot(reg_tree, main = "Decision Tree: Regression")
+```
+
+What we learn from the plot: 
+
+- The first row provides the predicted value of the target variable.
+- The second row shows the percentage of observations in each node.
+
+## Tree depth
+
+How deep should trees be grown?
+
+Suppose we have a continuous target variable $y$ and a predictor variable $x$, and we know the underlying relationship between them, meaning we have knowledge of the true function that connects them. We also have observations for both variables. In practice, we typically start with the observed data for both variables without knowing this relationship in advance.
+
+To explore the impact of tree depth, we generate synthetic data for visualization purposes. Our aim is to understand the effect of tree complexity. 
+
+
+```{r}
+# Set seed for reproducibility
+set.seed(123)
+
+# Generate some synthetic data
+n <- 300 # Number of observations
+x <- runif(n, 0, 6)  # random uniform points between 0 and 6
+y <- sin(x) + rnorm(n, 0, 0.3)  # underlying function plus noise
+
+# Create a data frame called "data2"
+data2 <- data.frame(x = x, y = y)
+
+# Create a data frame for the true underlying function
+x_seq <- seq(0, 6, length.out = 300)
+y_true <- sin(x_seq)
+
+# Plot
+ggplot(data2, aes(x = x, y = y)) +
+  geom_point(alpha = 0.5, color = "grey") +  # observations
+  geom_line(aes(x = x_seq, y = y_true), color = "blue", linewidth = 1) +  # true function
+  labs(x = "x", y = "y") +
+  theme_minimal()
+
+```
+
+
+We'll begin with a simple tree model that has just one split. Our goal is to predict the variable $y$ based on the variable $x$, aiming to approximate the underlying blue line. By using the control argument along with the `rpart.control()` function, we can define various stopping criteria for tree growth. Setting `maxdepth = 1` allows us to create a decision tree that has no more than one split.
+
+```{r}
+# Fit a decision tree with one split
+tree <- rpart(y ~ x, data = data2, control = rpart.control(maxdepth = 1))
+
+# Predict the fitted values from the tree
+data2$y_pred <- predict(tree)
+
+# Plot the tree with rpart.plot
+rpart.plot(tree)
+```
+
+Let's plot the result.
+
+```{r}
+# Plot
+ggplot(data2, aes(x = x, y = y)) +
+  geom_point(alpha = 0.5, color = "grey") +  # observations
+  geom_line(aes(x = x_seq, y = y_true), color = "blue", linewidth = 1) +  # true function
+  geom_step(aes(y = y_pred), color = "red", linewidth = 1) +  # decision tree prediction
+  geom_vline(xintercept = tree$splits[1, "index"], linetype = "dashed") +  # tree split
+  annotate("text", x = tree$splits[1, "index"], y = -1, label = "split", angle = 90, vjust = -1) +
+  labs(x = "x", y = "y") +
+  theme_minimal()
+```
+
+We repeat the process, this time allowing the tree to grow with a maximum depth of three splits.
+
+```{r}
+# Fit a decision tree with one split
+tree <- rpart(y ~ x, data = data2, control = rpart.control(maxdepth = 3))
+
+# Predict the fitted values from the tree
+data2$y_pred <- predict(tree)
+
+# Plot the tree with rpart.plot
+rpart.plot(tree)
+```
+```{r}
+# Plot
+ggplot(data2, aes(x = x, y = y)) +
+  geom_point(alpha = 0.5, color = "grey") +  # observations
+  geom_line(aes(x = x_seq, y = y_true), color = "blue", linewidth = 1) +  # true function
+  geom_step(aes(y = y_pred), color = "red", linewidth = 1) +  # decision tree prediction
+  labs(x = "x", y = "y") +
+  theme_minimal()
+```
+
+The more complex the tree, the more steps to we create in the red function. At some point, the red line starts to overfit to the observations instead of capturing the underlying blue function. 
+
+
+![](figures/tree_depth.gif)
+
+Instead of restricting the depth of the tree, we can also set a minimum number of observations required in each leaf node. This prevents the tree from making further splits when the number of observations is too small, helping to reduce the risk of overfitting the data. We will learn more about this in the random forest section.
+
+**Summary**
+
+* **Pros:** simple to interpret, fast, built-in variable selection, non-parametric.
+* **Cons:** single trees are often inaccurate, big trees get messy, easy to overfit.
+* **So what's next?** Random forests fix most of this by averaging many trees.
+
+Before we go there, we have one last concept to cover.
+
+# Bagging 
+
+*Bagging*, short for *bootstrap aggregating*, involves combining multiple classifiers, in this case decision trees, to enhance prediction accuracy and robustness. The process begins by creating several training datasets from the original data using bootstrapping, where random samples are taken with replacement. In the context of a random forest, this results in multiple decision trees, each trained on a different bootstrapped sample. The final prediction is obtained by aggregating the outputs—either by averaging in regression tasks or through majority voting in classification. By leveraging multiple trees, bagging helps reduce variance, mitigate overfitting, and improve overall model performance.
+
+![](figures/Bagging.jpg)
+
+Using the same artificial example as before, we can look at the relationship between the number of decision trees in the ensemble and the prediction error. The graph shows that the prediction becomes better (closer to the blue line) with an increasing amount of trees in the ensemble.
+
+![](figures/bagging.gif)
+
+However, one last problem remains! **The trees in the bootstrap aggregating algorithm are highly correlated**, i.e. they all look very similar. If the individual trees in the ensemble are highly correlated, the benefits of averaging are diminished because the trees make similar predictions on new data. 
+
+```{r}
+num_trees <- 10
+
+# Fit multiple decision trees using lapply and bootstrap sampling
+set.seed(123)  # Set a seed for reproducibility
+trees <- lapply(1:num_trees, function(i) {
+  # Create a bootstrap sample from the data (sampling with replacement)
+  bootstrap_sample <- data2[sample(1:nrow(data2), replace = TRUE), ]
+  
+  # Fit a decision tree to the bootstrap sample
+  rpart(y ~ x, data = bootstrap_sample, model = TRUE, control = rpart.control(maxdepth = 6))
+})
+
+# Plot all trees in a grid
+par(mfrow = c(2, 5))  # 2 rows, 5 columns
+for (i in 1:num_trees) {
+  rpart.plot(trees[[i]], main = paste("Tree", i))
+}
+
+# Reset plotting layout
+par(mfrow = c(1, 1))
+```
+
+
+This correlation among trees can limit the diversity of the ensemble, making it less effective at capturing different aspects of the data and potentially resulting in suboptimal performance. To address this issue, the random forest algorithm builds on bagging by introducing additional randomness through predictor selection. 
+
+# Random forest
+
+The random forest algorithm extends the concept of bagging by introducing additional randomness. Each tree is trained on a different bootstrap sample of the data, and during tree construction, a random subset of predictors is considered at each split.This additional layer of randomness helps in creating a more diverse set of trees, thereby improving the robustness and generalization of the ensemble model.
+
+## Parameter tuning
+
+Each time a split is performed, the search for the optimal split variable is limited to a random subset of $m$ of the all $p$ predictors. The parameter is often referred to as `mtry = m`. 
+
+Every time a bootstrap sample is constructed, there are observations that get left out. There *out-of-bag* observations are not used to construct the tree, but can be used assess the optimal parameters of the model. For the OOB error to be valid, the number of observations $N$ should be sufficiently large. Besides `mtry`, there are other parameters that can be tuned to increase the performance of the algorithm. The most important ones are:
+
+- `mtry`: Number of predictors to be considered at each split.
+
+  * We need a sufficient amount of trees for a good prediction. 
+  * Rule of thumb: Start with $p \times 10$ and adjust if necessary. 
+  * Computation time: increases linearly with the number of trees
+- `ntree`: The number of trees in the random forest.
+
+  * Balances low tree correlation and predictive strength.
+  * Rule of thumb: regression - $p /3$ and classification - $\sqrt(p)$.
+  * Computation time: Increases approximately linearly with higher values of mtry.
+  
+- `min.node.size`: The minimal number of observations a leaf node.
+
+  * Balances tree complexity to avoid overfitting.
+  * Rule of thumb: regression default - 5 and classification default - 1. 
+  * Computational time: Increases approximately exponentially with small node sizes.
+  * There are other parameters that can be used to control tree complexity, but this one is the most common.
+
+## Classification
+
+In the following, we build a classification random forest using the same example as before. Our goal is again to classify whether a student is risk affine or risk averse. There are many R packages that include the random forest algorithm. We will use the `ranger` package as this is one of the most common ones. The first step is to tune the parameters `mtry`, `ntree` and `min.node.size`. To that end, we divide our student survey in a training and a test set.
+
+There are several packages available for parameter tuning in random forests, and you can also write your own code for specific training schemes. In this session, we will focus on the `caret` package, as we did with LASSO. However, `caret` only allows tuning of the `mtry` parameter, which significantly impacts the model's final accuracy. The `ntree` parameter is different in that it can be as large as you like, and continues to increases the accuracy up to some point. It is less difficult or critical to tune and could be limited more by compute time available more than anything. Therefore, we will first ensure that we have an adequate number of trees and then proceed to tune the `mtry` and 
+`min.node.size` parameters.
+
+
+```{r}
+library(ranger)
+library(caret)
+
+set.seed(123) # For reproducibility
+
+# Create a training and test dataset
+trainIndex <- createDataPartition (data$risk_affine, p = 0.7, list = FALSE)
+trainData <- data[trainIndex, ]
+testData <- data[-trainIndex, ]
+dim(trainData)
+dim(testData)
+```
+
+Next, we will use the default settings for `mtry` and `min.node.size` to examine how accuracy changes as we increase the number of trees. To do this, we first define a grid with the different numbers of trees we want to test. Then, we use a `for` loop to fit a random forest model with the `ranger()` function for each value of `ntree`, and we record the resulting Root Mean Squared Error (RMSE) or prediction error for each tree count.
+
+
+```{r}
+# Creates a data frame (tuning_grid) where trees ranges from 5 to 400 in 
+# steps of 5. The rmse column is initialized with NA to be filled later.
+tuning_grid <- expand.grid(
+  trees = seq(5, 400, by = 5),
+  rmse  = NA
+)
+
+
+for(i in seq_len(nrow(tuning_grid))) { # Iterates over each row of the tuning_grid.
+  
+  # Fits a random forest model with the current number of trees specified by 
+  # tuning_grid$trees[i], and mtry set to the square root of 5. 
+  # verbose = FALSE suppresses detailed output, and 
+  # seed = 123 ensures reproducibility.
+  fit <- ranger(
+  formula    = risk_affine ~ female + statistiknote_w1 + fachsemester + 
+                             erstfach_name + alkohol, 
+  data       = trainData, 
+  num.trees  = tuning_grid$trees[i],
+  mtry       = sqrt(5), 
+  verbose    = FALSE,
+  seed       = 123
+  )
+  # Stores the RMSE of the model in the rmse column of tuning_grid for the 
+  # corresponding number of trees. The RMSE is calculated as the square root 
+  # of the fit$prediction.error.
+  tuning_grid$rmse[i] <- sqrt(fit$prediction.error)
+}
+```
+
+
+Now we can plot the resulting RMSE values against the number of trees in the random forest.
+
+
+```{r}
+# Plot the rmse against then number of trees
+ggplot(tuning_grid, aes(trees, rmse)) + 
+  geom_line()
+```
+
+We don't see a very clear pattern, but after about 150 trees, the prediction error does not change much anymore. Notice, that the value range on the y-axis is very narrow.
+
+Now, we select a sufficient number of tree and assume `ntree`$=150$ is fixed. Using again the cross-validation approach included in the `caret` package, we tune the remaining parameter `mtry` and `min.node.size`. 
+
+
+```{r}
+# Defines the training scheme to be 10-fold cross-validation
+train_control <- trainControl(method = "cv", number = 10)
+```
+
+We specify the values to be considered and also define the `splitrule`, as this is required by the train function when training a ranger object.
+
+```{r}
+tune_grid <- expand.grid(
+  mtry = seq(2,4,0.05),  # Number of variables randomly sampled at each split
+  splitrule = "gini", # Number of trees in the forest
+  min.node.size = c(1, 5, 10) # Minimum size of terminal nodes
+)
+tune_grid
+```
+
+
+Using the `train()` function and specifying the method to be `ranger` the tuning can begin. The output is the model with the preferred combination of parameters. 
+
+```{r}
+# Train the Random Forest model using ranger in caret
+
+set.seed(123) # Set seed for reproducibility 
+rf_model <- train(
+  risk_affine ~ female + statistiknote_w1 + fachsemester + 
+                erstfach_name + alkohol, 
+  data = trainData, 
+  method = "ranger",             
+  trControl = train_control, 
+  tuneGrid = tune_grid, 
+  num.trees = 150                
+)
+
+# Print the best model and results
+print(rf_model)
+```
+
+
+
+
+# Model evaluation 
+
+**Why evaluate at all?**
+A model isn’t *good* because it fits the training data. It's good if it *generalizes* and supports the decision you care about. Evaluation tells us if we're actually meeting that goal.
+
+## Accuracy
+
+To get an intuition about the model's performance, we create predictions on our test data and evaluate the **prediction accuracy** using the confusion matrix. A confusion matrix is a performance measurement tool for classification models, including random forests. It provides a summary of the model’s predictions compared to the actual outcomes.
+
+
+```{r}
+# Make predictions on the test set
+predictions <- predict(rf_model, newdata = testData)
+
+# Confusion matrix to evaluate performance
+confusionMatrix(predictions, testData$risk_affine, positive = "1")
+```
+
+
+What do we learn from this?
+
+- True Negatives (TN): 5 (Correctly predicted as class 0)
+- False Positives (FP): 6 (Incorrectly predicted as class 0, but true class is 1)
+- False Negatives (FN): 18 (Incorrectly predicted as class 1, but true class is 0)
+- True Positives (TP): 22 (Correctly predicted as class 1)
+- Accuracy (0.5294): The proportion of correctly classified instances out of all instances. Here, the model correctly classified 52.94% of the instances.
+- Kappa (0.0033): A statistic that measures the agreement between predicted and observed classifications, correcting for chance. A value close to 0 indicates poor agreement beyond what would be expected by chance.
+- Balanced Accuracy (0.5016): The average of sensitivity and specificity, providing a balanced measure of the model's performance. Here, the balanced accuracy is 50.16%.
+
+The model has an accuracy of 52.94%, which is not significantly better than random guessing. The kappa value indicates poor agreement beyond chance. The model performs reasonably well in predicting class 0 (specificity) but less well for class 1 (sensitivity). The balanced accuracy suggests that overall performance is slightly above random guessing, but improvements could be made.
+
+Overall, our model does not actually classify risk affinity very well. However, keep in mind that we have a very small dataset and very naively picked out potential determinants of risk affinity. Normally, we would have to reconsider our method or our variables at this point. Nonetheless, we will continue with this toy example to learn more about the random forest outcomes, such as variable importance and partial dependence. 
+
+
+```{r}
+# Fit the final model 'rf_model' 
+rf_final <- ranger(
+  formula    = risk_affine ~ female + statistiknote_w1 + fachsemester + 
+                             erstfach_name + alkohol, 
+  data       = trainData, 
+  num.trees  = 150,
+  probability = TRUE, # Set probability as true
+  importance = "impurity", # Define the importance measure!
+  mtry       = 2.55,
+  seed       = 123              
+)
+```
+
+## ROC-AUC
+
+**Why not only look accuracy for model evaluation?**  
+Accuracy counts the fraction correct at one fixed threshold (often 0.5). It can be misleading when:
+
+- **Class imbalance:** If only 10% are $1$, a simple model that predicts all $0$ gets 90% accuracy - but 0% recall for the class you care about.  
+- **Different costs:** A false negative may be worse than a false positive (or vice versa); accuracy treats them equally.  
+- **Threshold sensitivity:** A small threshold change can swing accuracy without changing a model's underlying ranking quality.
+
+**What to use instead:**  
+
+- **ROC–AUC:** Summarizes how well a model **ranks** outcome classes.  
+- **Compare to a baseline:** Check Random Forest against a simple OLS or logistic regression. If the random forest doesn't beat it on AUC, prefer the simpler model.  
+
+
+What does the classification random forest predict?
+
+```{r}
+rf_prob_pred <- predict(rf_final, data = testData)
+
+head(rf_prob_pred$predictions)
+```
+
+$\Rightarrow$ It predicts the *probability* that the outcome is $0$ or $1$! 
+
+ Order the predictions by the probability of the class being $1$:
+
+```{r}
+# Pick the predicted probabilities of the class 1 and the real classes
+prob1 <- cbind(rf_prob_pred$predictions[,"1"], as.integer(testData$risk_affine == "1"))
+prob1 <- as.data.frame(prob1)
+colnames(prob1) <- c("Prediction","True Class")
+
+# Order them by prediction
+prob1_ord <- prob1[order(prob1$Prediction, decreasing = TRUE), ]
+
+head(prob1_ord)
+```
+
+What should the threshold be, that the prediction is a $1$ or a $0$? 
+
+**Idea of the ROC-AUC:**
+The ROC curve is a threshold-free view of how well a model separates classes, showing the trade-off between catching positives (TPR) and raising false alarms (FPR). 
+
+Let's say we choose a threshold of $0.84$. $\Rightarrow$ Then probabilities of $\geq 0.84$ predict the class $1$, and $0$ otherwise.  
+
+```{r}
+example <- head(prob1_ord)
+example_84 <- cbind(example, c(1,1,0,0,0,0))
+colnames(example_84) <- c("Prediction","True Class","Predicted Class (Treshold 0.84)")
+example_84
+```
+
+Now we compute true positives (TP) and false negatives (FN):
+
+* TP = 1 (row 2)
+* FP = 1 (row 1)
+* FN = 2 (rows 3 and 5)
+* TN = 2 (rows 4 and 6)
+
+Rates at this threshold (provides one point on the ROC curve): 
+
+* Positives = 3 (rows 2,3,5), Negatives = 3 (rows 1,4,6)
+* TPR = TP / Positives = 1/3 $\approx 0.33$
+* FPR = FP / Negatives = 1/3 $\approx 0.33$
+* ROC point: (FPR = 0.33, TPR = 0.33)
+
+At threshold 0.85 the ROC point is (FPR = 0.33, TPR = 0.33) - we catch about one-thirds of positives while falsely flagging one-thirds of negatives. However, a single cutoff (e.g., 0.5 or 0.84) can be misleading under class imbalance, so the ROC considers every threshold.
+
+$\Rightarrow$ The **ROC curve** plots the TPR (y-axis) against the FPR (x-axis) for **all threshold**!
+
+```{r}
+library(pROC)
+
+# 1) Probabilities on the test set
+rf_prob_pred <- predict(rf_final, data = testData)
+
+rf_prob <- rf_prob_pred$predictions[,"1"]
+
+# Logistic regression baseline (same features)
+logit_fit <- glm(risk_affine ~ female + statistiknote_w1 + fachsemester + 
+                               erstfach_name + alkohol,
+                 data = trainData, family = binomial)
+logit_prob <- predict(logit_fit, newdata = testData, type = "response")
+
+
+test_y <- factor(testData$risk_affine, levels = c("0","1"))
+
+# 2) ROC curves + AUC
+roc_rf   <- roc(response = test_y, predictor = rf_prob,   levels = c("0","1"), direction = "<")
+roc_log  <- roc(response = test_y, predictor = logit_prob, levels = c("0","1"), direction = "<")
+
+auc_rf  <- auc(roc_rf)
+auc_log <- auc(roc_log)
+
+# 3) Plot ROC for both models
+plot(roc_rf,  col = "#1f77b4", lwd = 2, main = "ROC: Random Forest vs Logistic",
+     legacy.axes = TRUE, print.auc = FALSE)
+plot(roc_log, col = "#ff7f0e", lwd = 2, add = TRUE)
+legend("bottomright",
+       legend = c(paste0("Random Forest  (AUC = ", round(auc_rf, 3),  ")"),
+                  paste0("Logistic Reg. (AUC = ", round(auc_log, 3), ")")),
+       col = c("#1f77b4", "#ff7f0e"), lwd = 2, bty = "n")
+```
+
+
+
+**AUC means the area under ROC:**  
+
+- **Ranking view:** AUC is the chance that a randomly chosen **positive** ($= 1$) gets a **higher score** than a randomly chosen **negative** ($=0$).  
+- Scale:  
+  - $1.00 =$ perfect ranking  
+  - $0.50 =$ random guessing  
+  - $\leq0.50$ = systematically reversed (flip the scores)
+
+- **Model comparison:** Higher AUC $\rightarrow$ better overall ranking ability (e.g., compare Random Forest vs Logistic).
+
+::: {.task-box}
+# 10 Min Classroom Task 
+
+![](teamwork.png){width=60px fig-align="center"}
+
+Your task is to run a naive logistic LASSO model and compute the AUC. Does it perform better or worse than the logistic regression and the random forest?
+
+```{r,message = F}
+
+library(glmnet); library(pROC)
+
+# Formula as in the random forest and logistic regression
+form <- risk_affine ~ female + statistiknote_w1 + fachsemester + erstfach_name + alkohol
+
+# Train and test matrices for LASSO
+x_train  <- model.matrix(form, trainData)[, -1]
+x_test  <- model.matrix(form, testData)[, -1]
+y_train  <- as.integer(trainData$risk_affine == "1")
+y_test  <- factor(testData$risk_affine, levels = c("0","1"))
+
+# Naice CV and LASSO Model
+cv     <- cv.glmnet(x_train, y_train, family = "binomial", alpha = 1)
+lasso  <- glmnet(x_train, y_train, family = "binomial", alpha = 1, lambda = cv$lambda.min)  
+
+# YOUR TASK: 
+
+# 1) Use the LASSO model to predict the outcome using the x_test matrix (containing all X variables)
+
+# 2) Calculate the AUC using the predictions and the actual outcome y_test
+
+```
+:::
+
+
+# Variable importance 
+
+Variable importance is a key feature in random forest models, providing insights into how different predictors contribute to the model's predictions. In random forests, which consist of many decision trees, variable importance helps identify which variables are most influential in making accurate predictions. The intuition is that the more often a specific variable is used for a tree split, the more important is the variable for the overall prediction. We use the `vip` package to examine variable importance in our example.
+
+```{r}
+library(vip)
+```
+We create a plain plot by only using our model as a function argument of the `vip()` function.
+
+
+```{r}
+v1 <- vip(rf_final) # Calculate and plot the variable importance
+
+print(v1)
+```
+
+You can access the calculated variable importance measures.
+
+```{r}
+v1$data # Print the variable importance values
+```
+Using the explicit data above also allows to use any a ggplot2 barplot to visualize the variable importance. 
+
+```{r}
+# Example plot using ggplot2
+v1_table <- v1$data
+
+ggplot(v1_table, aes(x = reorder(Variable, Importance), y = Importance)) +
+  geom_bar(stat = "identity", position = "dodge", fill = "#4BADA9") +
+  coord_flip() +
+  scale_x_discrete(labels=c("statistiknote_w1"="Expected exam grade",
+                            "erstfach_name"="Major",
+                            "alkohol"="Alcohol consumption",
+                            "fachsemester"="Semester",
+                            "female"="Female"))+
+  labs(title = "", x = " ", y = "Importance") +
+  theme_minimal() +
+  theme(legend.position = "bottom")+
+  theme(axis.text=element_text(size=16),axis.title=element_text(size=16),
+        legend.text=element_text(size=12),
+        legend.title = element_text(size = 12))
+```
+
+
+# Partial dependence 
+
+Partial Dependence (PD) is a technique used to interpret machine learning models, particularly ensemble methods like random forests. It helps in understanding the relationship between a specific predictor and the predicted outcome, while accounting for the average effect of other predictors in the model.
+
+Partial Dependence Plots (PDPs) are graphical representations of this relationship. A PDP illustrates how the predicted outcome changes as the value of one or two predictors varies, while averaging out the effects of all other predictors. The PDPs provide a clear and intuitive way to interpret complex models. They help in diagnosing the nature of relationships (linear, nonlinear) between predictors and the target variable, and in identifying interaction effects between predictors.
+
+In our case, we are working with a ranger model that classifies whether a student is risk-affine or not, and we want to visualize the effect of individual features like `female`, `statistiknote_w1`, `fachsemester`, `erstfach_name`, and `alkohol` on the model's predictions.
+
+
+We use the `pdp` package to calculate partial dependence.
+
+```{r}
+library(pdp)
+```
+
+
+```{r}
+# Calculate the Partial Dependence for fachsemester
+pdp_fachsemester <- partial(
+  object = rf_final, 
+  pred.var = "fachsemester", 
+  train = trainData,
+  prob = TRUE
+)
+
+# Plot the PDP for fachsemester
+pdp_plot_fachsemester <- autoplot(pdp_fachsemester) +
+  ggtitle("Partial Dependence of the Expected Exam Grade on Fachsemester") +
+  ylab("Probability of being Risk Affine")+
+  xlab("Fachsemester")+
+  theme_minimal()
+
+# Show the plot
+pdp_plot_fachsemester
+```
+
+Interpretation: 
+
+- X-axis: Represents the values of the independent variable. For example, `statistiknote_w1` will have its possible grades along the X-axis.
+- Y-axis: Represents the average predicted probability of being risk-affine given a specific value of the independent variable.
+- Trend interpretation: If the curve is upward sloping for `statistiknote_w1`, it indicates that higher grades are associated with a higher probability of being risk-affine.
+
+Next, we look at the partial dependence of all predictor variables and combine everyhting into one plot. 
+
+```{r}
+# Calculate the Partial Dependence for statistiknote_w1
+pdp_statistiknote <- partial(
+  object = rf_final, 
+  pred.var = "statistiknote_w1", 
+  train = trainData,
+  prob = TRUE  # Since we're predicting probabilities
+)
+
+# Calculate the Partial Dependence for female
+pdp_female <- partial(
+  object = rf_final, 
+  pred.var = "female", 
+  train = trainData,
+  prob = TRUE
+)
+
+# Calculate the Partial Dependence for fachsemester
+pdp_fachsemester <- partial(
+  object = rf_final, 
+  pred.var = "fachsemester", 
+  train = trainData,
+  prob = TRUE
+)
+
+# Calculate the Partial Dependence for erstfach_name
+pdp_erstfach <- partial(
+  object = rf_final, 
+  pred.var = "erstfach_name", 
+  train = trainData,
+  prob = TRUE
+)
+pdp_erstfach$erstfach_name <- as.factor(pdp_erstfach$erstfach_name)
+
+# Calculate the Partial Dependence for alkohol
+pdp_alkohol <- partial(
+  object = rf_final, 
+  pred.var = "alkohol", 
+  train = trainData,
+  prob = TRUE
+)
+pdp_alkohol$alkohol <- as.factor(pdp_alkohol$alkohol)
+
+
+
+# Plot the PDP for fachsemester
+p1 <- autoplot(pdp_fachsemester) +
+  ylab("Prob. of being Risk Affine")+
+  xlab("Number of Semesters")+
+  theme_minimal()
+
+# Plot the PDP for erstfach_name
+p2 <- autoplot(pdp_erstfach) +
+  ylab("Prob. of being Risk Affine")+
+  xlab("Major")+
+  theme_minimal()
+
+# Plot the PDP for female
+p3 <- autoplot(pdp_female) +
+  ylab("Prob. of being Risk Affine")+
+  xlab("Female")+
+  theme_minimal()
+
+# Plot the PDP for alkohol
+p4 <- autoplot(pdp_alkohol) +
+  ylab("Prob. of being Risk Affine")+
+  xlab("Alkohol Consumption")+
+  theme_minimal()
+
+# Plot the PDP for statistiknote_w1
+p5 <- autoplot(pdp_statistiknote) +
+  ylab("Prob. of being Risk Affine")+
+  xlab("Expected Exam Grade")+
+  theme_minimal()
+
+# Combine the plots
+(p1 | p2 ) /
+(p3 | p4 ) /
+( p5) 
+```
+
+
+
+# Sources {.unlisted .unnumbered}
+- Greenwell, B. B. &. B. (2020, February 1). Chapter 11 Random Forests | Hands-On Machine Learning with R. https://bradleyboehmke.github.io/HOML/random-forest.html
+- Hastie, Trevor, Robert Tibshirani, and Jerome Friedman (2009). The elements of statisti-
+cal learning: data mining, inference and prediction. Springer. url: http://www-stat.
+stanford.edu/~tibs/ElemStatLearn/.
+- James, Gareth et al. (2013). An Introduction to Statistical Learning: with Applications in R. Springer New York. url: https://faculty.marshall.usc.edu/gareth-james/ISL/.
+- Wright, Marvin N. and Andreas Ziegler (2017). ranger: A Fast Implementation of Random Forests for High Dimensional Data in C++ and R. In: Journal of Statistical Software 77.1, pp. 1–17. doi: 10.18637/jss.v077.i01.
+
+&nbsp;
+\
+
+
+
+

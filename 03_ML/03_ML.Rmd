@@ -1,0 +1,167 @@
+---
+title: "Applied Econometrics and Data Science with R - Introduction to Supervised Machine Learning"
+author: "Felix Degenhardt & Sophie Wagner"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: flatly
+    highlight: tango
+    toc: true
+    toc_float: true
+    df_print: paged
+---
+
+```{css, echo=FALSE}
+.task-box {
+  background-color: #e8f4f8;
+  border-left: 5px solid #2c7fb8;
+  padding: 20px;
+  margin: 20px 0;
+  border-radius: 5px;
+}
+```
+
+
+# Motivation: Why Machine Learning in Economics?
+
+Economists often want to understand relationships (causality). In that case, the goal is to *infer* parameters, $\beta$ with
+traditional econometric models (OLS, IV, panel models). A *prediction* task have a different perspective and have a focus on predicting an outcome $Y$. Machine Learning is a field that develops algorithms designed to be applied to datasets, with the main areas of focus being prediction, classification, and clustering or grouping tasks (Athey, 2018). 
+
+Traditionally, machine learning algorithms were used to select predictors or to analyse effect heterogeneity. Caliendo et al. (2024), for example, use a LASSO framework to select the most important predictors of the objective wage potential of unemployed job seekers. 
+
+New work higlights that many economically important decisions are prediction problems (Mullainathan, 2025). These are decisions made by economic agents out in the world that depend not on a causal inference but on a predictive inference instead. Machine learning enables researchers to study how those decisions are made and how to improve them. These problems are called **prediction policy problems** (Kleinberg et al. 2015).
+
+
+Examples of prediction policy problems (Mullainathan, 2025): 
+
+  * **Justice**
+      - *What has been studied so far:* What is the causal effect of pretrial detention/electronic monitoring/bail size on crime?
+      - *Prediction policy problem:* Predict each defendant’s release risk and rank releases under a jail or risk constraint. *OR* Predict judges’ choices to uncover their implicit decision rule and generate testable hypotheses about misprediction/bias.
+  * **Health**
+      - *What has been studied so far:* What is the effect of more screening/referral/care management on health outcomes or costs?
+      - *Prediction policy problem:* Among current patients, who is most likely to have/soon develop the condition (or benefit from intervention), and how do we allocate a fixed number of tests/referrals to maximize net health benefit?
+  * **Public Finance**
+      - *What has been studied so far:* How do audits, penalties, or enforcement intensity affect compliance and revenue?
+      - *Prediction policy problem:* For each filed return, what is the expected recoverable revenue net of audit cost, and which returns should we audit next given the budget?
+  * **Education and Labor** 
+      - *What has been studied so far:* What is the effect of class size/teacher training/ALMPs/wage subsidies on student or employment outcomes?
+      - *Prediction policy problem:* Among applicants or placements, who will be high value-added (teachers) or high-performing (hires) in the next 6–12 months, and how do we rank/interview/hire to maximize expected productivity under constraints?
+  
+# Course Focus
+
+Will cover the basics and key concepts of **Supervised Machine Learning** and explore how these techniques can be applied to economic analysis and econometrics. Although you we will apply the concept to simple example scenarios, you will grasp the fundamental concepts, helping you understand how they can be applied in various contexts.
+ 
+# Introduction to Supervised Machine Learning 
+
+**Idea:** Predicting an outcome `Y` from predictors `X`. Where do we know this idea from?
+
+![](linreg_benchmark.gif){width=65%}
+
+## Linear Regression as a Benchmark
+
+Linear regression is based on the same idea. Economists traditionally focus on interpreting the coefficients $\beta$. The focus of ML algorithms is predicting the outcome $Y$, so the perspective is just a different one. Therefore, we can use linear regression as a benchmark model. 
+
+We can run regressions using the `lm()` function.
+```{r}
+?lm
+```
+
+Example: 
+```{r}
+mydata <- read.csv(file="../00_data/survey/survey_processed.csv", header=TRUE, sep=",")
+```
+
+```{r}
+# Combines three vectors into a matrix: 'risk_affine', a numeric conversion 
+# of 'statistiknote_w1' (where commas are replaced by periods and 
+# periods are removed), and 'paar_schuhe'.
+reg_data <- cbind(mydata$risk_affine, 
+                  as.numeric(gsub(",", ".", mydata$statistiknote_w1)), 
+                  as.numeric(gsub(",", ".", mydata$abiturnote)),
+                  mydata$paar_schuhe)
+
+reg_data <- na.omit(reg_data) # Removes rows with any missing values (NA).
+reg_data <- as.data.frame(reg_data) # Converts the matrix to a data frame.
+# Assigns column names to the data frame.
+colnames(reg_data) <- c("risk_affine", "note","abiturnote", "schuhe")
+
+
+# Fits a linear regression model where note is the dependent variable and 
+# risk_affine is the independent variable, using the data frame reg_data.
+lm1 <- lm(note ~ abiturnote, data = reg_data)
+# Provides a summary of the linear regression model, including coefficients, 
+# statistical significance, and model fit statistics.
+summary(lm1)
+```
+
+
+```{r}
+# Fits a similar regression model to before, adding schuhe as another 
+# independent variable.
+lm2 <- lm(note ~ abiturnote + schuhe, data = reg_data)
+summary(lm2)
+```
+
+More advanced regression models can be created using the glm command.
+```{r}
+# Fits a generalized linear model with a logistic regression 
+# where risk_affine is the dependent variable, and note and schuhe are 
+# independent variables, using the data frame reg_data.
+glm1 <- glm(risk_affine ~ abiturnote + schuhe, data = reg_data, family = binomial)
+summary(glm1)
+```
+
+::: {.task-box}
+## 10 Min Classrom Task
+
+![](teamwork.png){width=60px fig-align="center"}
+
+1) Please discuss why we need other algorithms than linear regression for prediction: When does OLS break down?
+
+2) Please estimate the predicted values $\hat{Y}$ for the outcome $Y$ using the linear regression model `lm2`. You might want to have a look at the `predict()` function!
+:::
+
+## Supervised Learning
+
+Similarly, supervised learning involves training a model on a dataset that also contains information on the outcome $Y$ ($=$labeled dataset). The goal is again to predict an outcome $Y$ based on inputs $X$.
+
+In labor economics, for instance, supervised learning can predict unemployment duration using input features like age, education, and work experience. By training on this data, the model learns patterns and relationships between features ($X$) and the outcome ($Y$), allowing it to predict unemployment duration for new individuals.
+
+|  | **Description**                                                                                                                                              |
+|------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Dataset**   | Suppose we have a dataset where each row represents an unemployed individual. The features might include age, education level, previous work experience, industry, geographical location, and the length of unemployment. |
+| **Labels**    | The label in this case could be the actual duration of unemployment (e.g., 3 months, 6 months).                                                              |
+| **Task**      | The task for the machine learning model is to learn from this labeled data and predict the unemployment duration for new individuals based on their characteristics. |
+
+
+
+        
+Summary:
+
+  - Uses labeled data (input-output pairs).
+  - The goal is to predict an output $Y$ based on input features $X$.
+  - Example: Predicting the duration of unemployment based on individual characteristics.
+  - Common algorithms: Penalized regression models (LASSO/Ridge regression), Decision trees and Random Forests, 
+  Neural Networks
+        
+        
+## Next Steps
+
+1. LASSO regression
+2. Decision Trees
+3. Random Forests
+
+
+## Sources {.unlisted .unnumbered}
+
+- Susan Athey, 2018. **The Impact of Machine Learning on Economics**, *NBER Chapters, in: The Economics of Artificial Intelligence: An Agenda*, pages 507-547, National Bureau of Economic Research, Inc.
+- Caliendo, M., Mahlstedt, R., Schmeißer, A. and Wagner, S., 2024. **The Accuracy of Job Seekers' Wage Expectations**, IZA Discussion Paper No. 17198. 
+- Kleinberg, Jon, Jens Ludwig, Sendhil Mullainathan, and Ziad Obermeyer, 2015. **Prediction Policy Problems.** *American Economic Review* 105 (5): 491–95.
+- Mullainathan, S., 2025. **Economics in the Age of Algorithms**, *AEA Papers and Proceedings* 115: 1–23.
+
+<!-- # Appendix {.unlisted .unnumbered} -->
+<!-- ## Sources {.unlisted .unnumbered} -->
+<!-- ## Additional resources  {.unlisted .unnumbered} -->
+
+&nbsp;
+\

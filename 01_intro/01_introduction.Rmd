@@ -1,0 +1,535 @@
+---
+title: "Applied Econometrics and Data Science with R - Introduction to R"
+author: "Felix Degenhardt & Sophie Wagner"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: flatly
+    highlight: tango
+    toc: true
+    toc_float: true
+    df_print: paged
+---
+
+```{css, echo=FALSE}
+.task-box {
+  background-color: #e8f4f8;
+  border-left: 5px solid #2c7fb8;
+  padding: 20px;
+  margin: 20px 0;
+  border-radius: 5px;
+}
+```
+
+
+
+# Motivation
+
+## Why R?
+
+**Open-source**: Free to use, extend, and share -- and backed by a large, active community.
+
+**Rich set of packages:** Whether you’re cleaning data with `dplyr`, visualizing with `ggplot2`, or building dashboards with `shiny`, R has a package for nearly every data science task you can imagine. 
+
+**Flexibility:** R is also cross-platform, meaning it runs on Windows, Mac, and Linux, and many of the concepts you learn in R (such as object-oriented programming) transfer easily to other languages like Python. 
+
+## Why R-Markdown?
+
+**All-in-one:** Combines code and narrative into a single, cohesive document. One of its key benefits is the ability to write code that generates immediate output, like graphs, tables, and summaries, which appear directly in the document. 
+
+**Reproducibility:** Being able to reproduce an analysis is essential for validation, peer review, and collaboration. R-Markdown allows you to document your entire analysis pipeline in one place, making it clear how the results were generated and ensuring that others can replicate your work exactly.
+
+**Flexibility:** Whether you need an HTML report for a web page, a PDF for printing, or even a Microsoft Word document for more traditional formats, R-Markdown allows you to easily create multiple types of outputs from the same source file. 
+
+**Automation:** Once your document is set up, it becomes easy to update. For example, if your dataset changes or new data comes in, you can re-run the analysis, and the entire document, including all outputs, updates automatically.
+
+## Rules for Clean Coding
+
+In any programming task, writing clean and readable code is essential. Clear code ensures that others (and you in the future) can easily understand your work, collaborate with you, and maintain or modify the code when necessary.
+
+1. **Always comment your code**. *What* is your code doing and importantly, *why* are you doing it? 
+
+2. **Use meaningful variable names**. Your variable names should convey what they represent without requiring the reader to look up their definitions. For instance, `avg_income` is much more informative than a generic name like `x`.
+
+3. **Don’t Repeat Yourself**. Automate your code using functions if possible. 
+
+4. **Aim to keep each line of code short**. 
+
+5. **Consistency **. You should always follow a consistent style for indentation, spacing, and naming conventions. 
+
+
+So let's go!
+
+
+## Some basics about R 
+
+- windows in Rstudio:
+    - The upper-left window is the script. A text file where you can type commands and run the commands, add comments and save your code for later use. 
+    - The lower-left window is the console. Here is where our results will show and (hopefully few) error messages. you can also directly type commands in this window.
+    - The upper-right window provides an overview the data you have in your working environment.
+    - The lower-right window is multifunctional. There are multiple tabs, such as files, plots, packages, help and viewer. Especially the tabs plots, packages and help are very useful as we will see soon.
+    
+### getting help {.unlisted .unnumbered}
+- type `?command` or `help(command)` to find out more! the R documentation will show up.
+```{r}
+help(setwd)
+
+```
+
+
+### useful shortcuts {.unlisted .unnumbered}
+- Mac: 
+  1. `cmd`+`enter` - executes code
+  2. `option` + `control` + `i` - inserts new code chunk
+  3. `cmd`+`shift` + `k` - knits
+  4. `cmd`+ `s` - saves
+
+- Windows: 
+  1. `ctrl` + `shift`+ `enter`- executes code
+  2. `ctrl`+`Alt` + `i`- inserts new code chunk
+  3. `ctrl`+ `shift`+ `k` - knits
+  4. `ctrl`+ `shift` + `s` - saves
+
+- fyi: `option` + `shift`+ `k`gives you a list of all shortcuts
+
+
+## Some basics about RMarkdown
+
+- R Markdown allows you to create a document that includes code, analysis output, as well as text. 
+
+- **Step 1:** Create a Markdown file **File --> New File --> R Markdown** lets you create a document with the ending .Rmd (can be openend in R Studio).
+- **Step 2:** You need to specify the format of the output file (the default is a html).
+- **Step 3:** Write your file and then press **Knit** to create the final document.
+
+There are many great online resources for RMarkdown. Here you can find a cheat sheet for the basic syntax: [link](https://www.markdownguide.org/cheat-sheet/).
+
+## Your first step
+
+Please create a folder for our class on your laptop. After that, please download our first RMarkdown document from Github and first save it in a new folder (e.g. "01_intro") in our class folder. Now you can open it in RStudio and start working in it! 
+
+## Syntax
+
+### Code chunk {.unlisted .unnumbered}
+```{r}
+print("My first code chunk.")
+```
+
+```{r}
+x <- 5
+```
+
+
+### Text chunk {.unlisted .unnumbered}
+This is plain text. 
+
+# Large Header {.unlisted .unnumbered}
+
+## Also large header {.unlisted .unnumbered}
+
+### Another header {.unlisted .unnumbered}
+
+#### And one more header {.unlisted .unnumbered}
+
+*Italic text*. **Bold text.**
+There are many more options on how to customize the text in your Markdown file.
+
+# Working directory
+
+The first step is to locate your working directory which is basically the path of the location from which you want to read files and to which you want to write files in R.
+
+Insert your folder path between the `""`. To check what is the current working directory:
+```{r}
+getwd() # current working directory
+```
+
+The easiest way, is to set up a coherent folder structure and refer to *relative* paths (compared to absolute paths). For example, whenever you `knit` and R-Markdown document, the default working directory will be the one in which the .rmd file is located. Thus, you can refer to files **within** this folder directly, or files in a folder within this folder by accessing "folder/file.csv", to a folder above the current one by accessing "../file.csv". 
+
+Alternatively, you can directly set your working directory: 
+
+```{r setup, include= TRUE}
+# knitr::opts_knit$set(root.dir = '/Users/sophiewagner/Dropbox/Econ_R/01_Intro/')
+```
+
+We are going to use relative paths throughout this semester!
+
+#  R Objects
+
+In R, everything is considered an object, from simple values like numbers and strings to more complex structures such as vectors, lists, data frames, and functions. Objects are useful because they allow you to store, manipulate, and analyze data in a structured way. For example, vectors can hold sequences of values, data frames can organize datasets in rows and columns, and regression models can store the results of statistical analyses.
+
+If we save something as an R object, we can access it again later (until we close the session). Use the `class()` function to find out an object's type. You assign values to names (or variables) using the `<-` operator. 
+
+## Values
+Values in R can be numeric, character, or logical. They represent the simplest form of an object.
+
+### Numeric: represents numbers {.unlisted .unnumbered}
+```{r}
+x <- 5 # Creates an object called 'x' and stores the value 5 under this name.
+```
+
+Now the value 5 is stored under the name x. 
+
+```{r}
+x # Outputs the current value of 'x'.
+x+10 # Adds 10 to the value of 'x', but does not store the result.
+y <- x+20 # Creates a new object 'y' by adding 20 to 'x'.
+y # Displays the value of 'y'.
+```
+```{r}
+class(x) # Outputs the class from object 'x'.
+```
+
+
+### Character/string: represents words or strings {.unlisted .unnumbered}
+
+Strings have to be written within `""`. This is very useful to store data paths (similar to globals in STATA).
+
+```{r}
+text <- "Hello, world!" # Create a new object 'text' and stores the words between the " ".
+text # Displays the value of 'text'.
+```
+### Logical: represents TRUE or FALSE values {.unlisted .unnumbered}
+
+```{r}
+val <- TRUE # Creates a new object 'val' and stores the logical value TRUE under this name.
+```
+
+```{r}
+class(val)
+```
+
+
+
+## Vectors
+A vector is a one-dimensional array that holds data of the **same type** (numeric, character, logical). You can create vectors using the `c()` function.
+
+```{r}
+age <- c(10, 15, 20, 25)  # Creates a numeric vector 'age'.
+age  # Displays the values in the 'age' vector.
+length(age)  # Returns the number of elements in the 'age' vector (i.e., 4).
+max(age)  # Returns the maximum value in the 'age' vector (i.e., 25).
+mean(age)  # Calculates the mean (average) of the values in the 'age' vector.
+sum(age)  # Returns the sum of all values in the 'age' vector.
+summary(age)  # Provides a statistical summary of the 'age' vector.
+```
+
+```{r}
+min(age)
+```
+
+
+```{r}
+# Creates a character vector 'fruits' containing a list of fruit names.
+fruits <- c("banana", "apple", "pear", "mango", "orange", "apple")  
+fruits[4]  # Accesses and displays the third element in the 'fruits' vector.
+```
+
+
+
+```{r}
+# Creates a sequence of numbers starting from 1 to 50 with a step size of 0.005.
+long_vector <- seq(1,50, 0.005) 
+ # Returns the number of elements in long_vector.
+length(long_vector)
+# Displays the first few elements of long_vector to provide a quick view of its contents.
+head(long_vector) 
+```
+
+
+## Factors
+Factors are used to represent categorical data. Each category is stored as a level.  
+
+
+```{r}
+# Creates a factor variable.
+gender_students<-factor(c("female", "male", "female", "male", "female", "male", "male", "male")) 
+# Retrieves and displays the levels of the gender_students factor.
+levels(gender_students) 
+# Returns the number of levels, which indicates how many distinct categories there are.
+nlevels(gender_students) 
+
+```
+
+
+## Lists
+Lists are flexible structures that can hold elements of different types, including other objects like vectors, data frames, or even functions.
+
+```{r}
+# Creates a list named my_list containing four elements of different types: 
+# an integer (1), a character string ("R"), a logical value (TRUE), 
+#and a numeric vector (c(5, 6, 7)).
+my_list <- list(1, "R", TRUE, c(5, 6, 7)) 
+my_list # Displays the content of the list.
+```
+
+```{r}
+# Accesses the fourth element, which is the numeric vector c(5, 6, 7).
+my_list[[4]] 
+# Retrieves the first element of the vector obtained from my_list[[4]], which is the number 5.
+my_list[[4]][1] 
+```
+
+
+
+## Data frames
+A data frame is a two-dimensional table-like structure where each column is a vector of the same length, but different columns can store different types of data (numeric, character, etc.). Data frames are commonly used to store datasets.
+
+```{r}
+# Creates a data frame named df with four columns: Name (character vector), 
+# Age (numeric vector), Car (character vector), and Nr_Children (numeric vector).
+df <- data.frame(Name = c("Alice", "Bob","Cecil","Dennis"), 
+                 Age = c(25, 30,15,60), 
+                 Car = c("yes","no","yes","yes"),
+                 Nr_Children = c(0,0,2,4))
+
+
+#View(df) # Displays the data frame 'df'.
+```
+
+If you want to select a subset of the data from the dataframe, you use `[,]` brackets.
+Fill in the row(s) and column(s) you want: `[rows, columns]` using the colon, e.g., `1:10` gives you elements 1 to 10.
+
+```{r}
+# Selects and displays the data from rows 1 and 2, and columns 1 through 3.
+df[1:2,1:3] 
+# Retrieves the value from row 1, column 3, which corresponds to the Car value for the first row.
+df[1,3] 
+# Selects and displays all columns for the second row.
+df[2, ] 
+```
+
+
+
+You can access the columns of a dataframe by using its name and the `$` operator.
+```{r}
+mean(df$Age) # Computes the mean (average) of the Age column. 
+summary(df$Nr_Children) # Provides a summary of the Nr_Children column.
+```
+
+## Matrices
+A matrix is a two-dimensional structure that contains data of the same type. Unlike data frames, all elements in a matrix must be of the same type.
+
+```{r}
+# Creates a 3x3 matrix named mat with elements from 1 to 9, filled column-wise by default.
+mat <- matrix(1:9, nrow = 3, ncol = 3) 
+mat # Displays the content of the matrix.
+```
+
+
+## Converting data types
+
+```{r}
+as.character(x) # Converts the variable x to a character vector.
+as.numeric("6.5") # Converts the character string "6.5" to the numeric value 6.5.
+
+mat2 <- as.data.frame(mat) # Converts the matrix mat to a data frame and assigns it to mat2.
+mat2 #  Displays the contents of the data frame mat2.
+```
+
+::: {.task-box}
+# 10-Min Classroom Task
+![](teamwork.png){width=60px fig-align="center"}
+
+1. Create a vector that contains the numbers 1 to 10. 
+2. What is the mean of the numbers from 1 to 10?
+3. Please transform this vector into a character vector.
+4. Create a data frame with: column `a`: the character version of 1–10 and column `b`: the numeric values 11–20.
+
+:::
+
+# Loading data into R
+
+Clean work space:
+
+```{r}
+rm(list =ls()) # Clears the entire workspace by removing all objects.
+```
+
+
+We are going to load our first data into R. We will use the student survey from the introduction to statistics course. This is a csv file. The data will be loaded in a data frame. Please download the survey data from Moodle and save it in a new folder in our class folder on your laptop (e.g. "00_data/survey/").
+
+Read csv file and save in data frame called `mydata`
+
+```{r}
+mydata <- read.csv(file="../00_data/survey/survey.csv", header=TRUE, sep=",")
+```
+
+What is in the dataset?
+```{r}
+#View(mydata)
+```
+
+Variables? Examples:
+
+- `erstfach`:		field of study
+- `paar_schuhe`:		number of shoes (pairs)
+- `job`:		job besides studies (1 = yes)
+- `alkohol`:		alcohol consumption per week
+- `sport`:		sport per week
+- `mutter_selbststaendig`:		mother self-employed (1 = yes)
+- `partei`:		party if next Sunday was Bundestag election
+                                  
+
+# Exploring the data  
+
+## Basic functions
+```{r}
+summary(mydata) # Provides basic descriptive statistics and frequencies.
+names(mydata) # Lists variables in the dataset.
+```
+
+*fyi: We will learn about an even better summary table in the automation session!*
+    
+
+We can create a frequency table with the `table()` command.  
+
+
+```{r}
+t <- table(mydata$geschlecht)  # Creates a frequency table and save it under 't'.
+print(t) # Displays the content.
+```
+
+Do we have missing observations?
+
+```{r}
+colSums(is.na(mydata)) # Shows the number of missings for each variable.
+```
+
+
+
+We can look at missing observations of a specific variable
+
+```{r}
+sum(is.na(mydata$computer)) # Prints the number if missing for the variable 'computer'.
+
+```
+
+
+
+## Correlations
+We can construct a table with correlations for the numeric variables.
+
+```{r}
+# Displays the data type for each variable in the dataframe 'mydata'.
+sapply(mydata,class) 
+```
+
+Maybe, we want to calculate a correlation matrix for selected columns of a 
+data frame. We only complete (non-missing) observations, to not get an error.
+```{r}
+# Computes the correlation coefficient between the alkohol and sport columns 
+# of the mydata data frame, using only rows with no missing values.
+correlations <- cor(mydata$alkohol, mydata$sport, use = "complete.obs") 
+print(correlations)
+```
+
+
+```{r}
+# Computes the correlation matrix for the columns alkohol, sport, and bio from 
+# the mydata data frame, considering only rows with no missing values.
+correlations2<-cor(mydata[, c("alkohol", "sport", "bio")], use = "complete.obs")
+print(correlations2)
+```
+
+
+## Constructing variables
+It might be useful to create another variable with the data we have. Here is an example: we will create a dummy variable that equals 1 risk affinity is above the mean and we will save this variable in our data frame mydata and name it `risk_affine`.
+
+```{r}
+# Creates a new column risk_affine in the mydata data frame. This column is 
+# assigned a numeric value indicating whether the 'risiko' value in each row is 
+# greater than the mean 'risiko' (calculated while ignoring missing values). 
+# The result is 1 if risiko is above the mean, and 0 otherwise.
+mydata$risk_affine <-as.numeric(mydata$risiko>mean(mydata$risiko, na.rm = TRUE)) 
+```
+
+We can create a frequency table.
+```{r}
+table(mydata$risk_affine) # Displays a frequency table for the new variable.
+```
+
+
+## Simple plots
+
+We will look at some basic graphs that are included in base R. Since we will have a whole session on data visualization in the `ggplot2` sesssion, this section will be rather short. 
+
+### Histogram {.unlisted .unnumbered}
+```{r}
+hist(mydata$risiko) # Plots a simple histogram for the 'risiko' variable.
+```
+
+```{r}
+#?hist
+```
+More options
+
+```{r}
+hist(mydata$risiko, 
+     main="Histogram of Risk Affinity",   # Defines the title.
+     col = "light blue",            # Changes the color of the bins.
+      xlab="Risk Affinity (0 = very risk averse, ... , 10 = very risk seeking)", 
+     ylab= "Frequency" # Edits the x and y axis titles.
+     )  
+```
+
+### Scatterplot {.unlisted .unnumbered}
+
+```{r}
+# Creates a simple scatterplot for 'risiko' and 'geduldig'.
+plot(mydata$risiko, mydata$geduldig, xlab = "Risk Affinity", ylab = "Patience")
+```
+
+# Saving data
+
+Write the data to your working directory, save in a csv or txt file.
+```{r}
+# Saves the data frame 'mydata' in a text file in the working directory.
+write.table(mydata, file = "../00_data/survey/mydata.txt", sep = "\t")
+```
+
+::: {.task-box}
+# 10-Min Classroom Task
+
+![](teamwork.png){width=60px fig-align="center"}
+
+The task should be solved in groups of two or three. 
+
+Suppose you want to start working on your project together. Discuss with your neighbor the following question:
+
+- How would you intuitively collaborate in groups on a joint R project, or joint writing? 
+- What issues would you anticipate? 
+
+:::
+
+# Appendix
+
+**Apply Function Family**
+
+In R, the `apply` function family is a set of functions designed to streamline 
+operations on data structures like matrices and dataframes, reducing the need 
+for explicit loops (which we will learn about in the automation session). 
+Key functions in this family include:
+
+- `apply`: Applies a function to the margins (rows or columns) of a matrix or dataframe. For example, it can calculate row or column sums or means.
+- `lapply`: Applies a function to each element of a list or vector and returns the results as a list.
+- `sapply`: Similar to lapply, but attempts to simplify the result to a vector or matrix when possible.
+- `tapply`: Applies a function to subsets of a vector, grouped by a factor or list of factors.
+- `mapply`: Applies a function to multiple list or vector arguments simultaneously, element-wise.
+These functions make data manipulation more concise and readable by avoiding the need for repetitive loops and are particularly useful for applying operations across data structures efficiently.
+
+
+
+
+Example: 
+
+```{r}
+sapply(mydata, class) # Provides class of each variable (column).
+```
+
+# Sources {.unlisted .unnumbered}
+
+- Xie Y, Allaire J, Grolemund G (2018). R Markdown: The Definitive Guide. Chapman and Hall/CRC, Boca Raton, Florida. ISBN 9781138359338, https://bookdown.org/yihui/rmarkdown.
+
+- Basic Syntax | Markdown Guide. (Cone, M.). Retrieved October 9, 2024, from https://www.markdownguide.org/basic-syntax/
+
+&nbsp;
+\

@@ -1,0 +1,445 @@
+---
+title: "Applied Econometrics and Data Science with R - LASSO"
+author: "Felix Degenhardt & Sophie Wagner"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: flatly
+    highlight: tango
+    toc: true
+    toc_float: true
+    df_print: paged
+  cache: false
+---
+
+```{css, echo=FALSE}
+.task-box {
+  background-color: #e8f4f8;
+  border-left: 5px solid #2c7fb8;
+  padding: 20px;
+  margin: 20px 0;
+  border-radius: 5px;
+}
+```
+
+
+# Introduction to LASSO
+
+LASSO (Least Absolute Shrinkage and Selection Operator) regression is a type of linear regression that performs variable selection and regularization. It helps in reducing model complexity and preventing overfitting by penalizing large coefficients. This makes it particularly useful when dealing with high-dimensional datasets.
+
+**Intution:** In ordinary linear regression, the goal is to minimize the residual sum of squares to find the best fit for the data. However, when dealing with a large number of predictors, the model can become overly complex, leading to overfitting. What's overfitting? In prediction tasks, including more and more variables seemingly improves the prediction (lowers bias) but also decreases generalizability. 
+
+```{r, echo=FALSE, out.width = '75%', fig.align="center", fig.cap="https://upload.wikimedia.org/wikipedia/de/2/2a/Varianz_und_Bias.svg"}
+knitr::include_graphics("figures/bias_variance_tradeoff.png", error = FALSE)
+```
+
+Think about the simple example you see below:
+
+* Assume y and x are not linearly correlated, and we can capture this nonlinearity by including higher order polynomials (e.g. \(x^2\), \(x^3\)). 
+* This will increase the fit (shown by the fitted line) but also increases model complexity.  
+* LASSO addresses this by introducing a penalty term that constrains the absolute size of the sum of coefficients, shrinking less important ones to zero. Intuitively, the absolut sum of coefficients (e.g. \( \beta_1 \) + \( \beta_2 \)) increases the more variables you add. But the model does not necessarily get better. 
+* This issue should be familiar from discussions of R^2 in Econometrics, where you learned about an adjusted \(R^2\) that accounts for the number of variables. This makes the model both simpler and more interpretative. 
+* **Why is this important?** Think also about the OLS assumptions: One of them was no multicollinearity, meaning that if two predictor variables are highly correlated with each other, OLS breaks down (you saw an extreme example with including both a male and female dummy). Also, the more complexity you add, the higher the change of running into issues with multicollinearity.
+
+
+```{r, echo = F, warning=F, message = F}
+library(ggplot2)
+library(glmnet)
+library(ggpubr)
+
+# Set seed for reproducibility
+set.seed(42)
+
+# Generate sample data
+n <- 100
+x <- rnorm(n, 0, 1)
+y <- 3*x + 2*x^2 + x^3 + rnorm(n, 0, 2)  # True relationship: quadratic
+
+# Create a data frame
+data <- data.frame(x = x, y = y)
+
+# ---- Existing plots -------------------------------------------------------
+# Scatter
+p0 <- ggplot(data, aes(x = x, y = y)) +
+  geom_point(color = "blue") +
+  labs(title = " ", x = "x", y = "y")
+
+# Design matrices (linear, 2nd, 3rd order)
+X_linear <- model.matrix(~ x, data)
+X_poly   <- model.matrix(~ poly(x, 2, raw = TRUE), data)
+X_poly3  <- model.matrix(~ poly(x, 3, raw = TRUE), data)
+
+# (Your CV calls—kept as-is though alpha=0 is ridge)
+cv_lasso_linear <- cv.glmnet(X_linear, y, alpha = 0)
+cv_lasso_poly   <- cv.glmnet(X_poly,   y, alpha = 0)
+cv_lasso_poly3  <- cv.glmnet(X_poly3,  y, alpha = 0)
+
+# Fits (your code used OLS via lm() for the lines)
+fit_linear <- lm(y ~ X_linear)
+fit_poly   <- lm(y ~ X_poly)
+fit_poly3  <- lm(y ~ X_poly3)
+
+# Predictions added to data
+data$y_pred_linear <- as.vector(predict(fit_linear, as.data.frame(X_linear)))
+data$y_pred_poly   <- as.vector(predict(fit_poly,   as.data.frame(X_poly)))
+data$y_pred_poly3  <- as.vector(predict(fit_poly3,  as.data.frame(X_poly3)))
+
+# Plots: linear, 2nd, 3rd
+p1 <- ggplot(data, aes(x = x, y = y)) +
+  geom_point(color = "blue") +
+  geom_line(aes(y = y_pred_linear), color = "red", size = 1) +
+  labs(title = " ", x = "x", y = "y")
+
+p2 <- ggplot(data, aes(x = x, y = y)) +
+  geom_point(color = "blue") +
+  geom_line(aes(y = y_pred_poly), color = "green", size = 1) +
+  labs(title = " ", x = "x", y = "y")
+
+p3 <- ggplot(data, aes(x = x, y = y)) +
+  geom_point(color = "blue") +
+  geom_line(aes(y = y_pred_poly3), color = "orange", size = 1) +
+  labs(title = " ", x = "x", y = "y")
+
+# ---- NEW: add 10th-order OLS and LASSO panels -----------------------------
+# 10th-degree polynomial design
+X10 <- model.matrix(~ poly(x, 10, raw = TRUE), data = data)[, -1]  # drop intercept (glmnet adds one)
+
+# High-degree OLS (wiggly)
+ols10 <- lm(y ~ poly(x, 10, raw = TRUE), data = data)
+
+# LASSO with CV; use the simpler 1-SE rule
+set.seed(1)
+cv10    <- cv.glmnet(X10, y, alpha = 1, nfolds = 10)
+lasso10 <- glmnet(X10, y, alpha = 1, lambda = cv10$lambda.1se)
+
+# Smooth predictions on a dense grid for the lines
+grid  <- data.frame(x = seq(min(x), max(x), length.out = 300))
+Xg10  <- model.matrix(~ poly(x, 10, raw = TRUE), data = grid)[, -1]
+pred_ols10   <- as.numeric(predict(ols10,  newdata = grid))
+pred_lasso10 <- as.numeric(predict(lasso10, newx = Xg10))
+
+df_ols10   <- data.frame(x = grid$x, y = pred_ols10)
+df_lasso10 <- data.frame(x = grid$x, y = pred_lasso10)
+
+p4 <- ggplot(data, aes(x, y)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  geom_line(data = df_ols10, aes(x, y), color = "grey25", linewidth = 0.9, linetype = 2) +
+  labs(title = " ",
+       subtitle = "Overfit wiggles on training data",
+       x = "x", y = "y") +
+  theme_minimal(base_size = 13)
+
+p5 <- ggplot(data, aes(x, y)) +
+  geom_point(alpha = 0.6, color = "blue") +
+  geom_line(data = df_lasso10, aes(x, y), color = "black", linewidth = 1.1) +
+  labs(title = " ",
+       subtitle = "Shrinkage zeroes unhelpful terms",
+       x = "x", y = "y") +
+  theme_minimal(base_size = 13)
+
+# ---- Arrange: original row + new row --------------------------------------
+row1 <- ggpubr::ggarrange(p0, p1, p2, p3, ncol = 4,
+                          labels = c("Data", "OLS: Linear", "OLS: 2-Poly", "OLS: 3-Poly"))
+row2 <- ggpubr::ggarrange(p4, p5, ncol = 2,
+                          labels = c("OLS: 10-Poly", "LASSO (10-degree)"))
+
+ggpubr::ggarrange(row1, row2, ncol = 1, heights = c(1, 1))
+```
+
+LASSO modifies the standard linear regression by adding a regularization term:
+
+\[
+\hat{\beta} = \arg\min_{\beta} \left( \sum_{i=1}^{n} (y_i - \sum_{j=1}^{p} X_{ij} \beta_j)^2 + \lambda \sum_{j=1}^{p} |\beta_j| \right)
+\]
+
+- \( y_i \): Dependent variable
+- \( X_{ij} \): Predictor variables
+- \( \beta_j \): Regression coefficients
+- \( \lambda \): Regularization parameter that controls the strength of the penalty
+
+The first part of the formula is the usual residual sum of squares, and the second part is the *L1 penalty*, which is the sum of the absolute values of the coefficients. When \(\lambda = 0\), LASSO behaves like ordinary least squares regression. Thus, \(\beta\) is calculated such that it minimizes the sum of squares.  As \(\lambda\) increases, the penalty grows, shrinking more coefficients to zero, intuitively those will only be the most important variables who help the most in minimizing the left part.
+
+## LASSO in a nutshell
+
+**What it is:** LASSO (Least Absolute Shrinkage and Selection Operator) is linear regression with an extra rule: keep coefficients small, and set some to **exactly zero**,  effectively removing less important predictors from the model.
+
+**Why it helps:** More features can overfit (great on training, bad on new data). LASSO adds an **L1 penalty**—think of it as a **budget for coefficient size**. Variables that don’t earn their keep get shrunk to zero.
+
+**Key takeaways**
+
+- **Variable selection:** Some betas become 0 $\rightarrow$ automatic feature selection.  
+- **Bias–variance trade-off:** LASSO introduces bias but reduces variance, improving model generalization.  
+- **λ (lambda):** Controls the budget. $\lambda=0$ $\rightarrow$ OLS; larger $\lambda$ $\rightarrow$ more shrinkage.
+
+
+
+In this tutorial, we'll use the `glmnet`package, which efficiently fits LASSO models `caret` package, which simplifies model tuning and cross-validation. For our study case, we again utilize the student survey. We'll demonstrate how to preprocess the data, train a LASSO model, and interpret the results. The goal will be to predict the expected grade of the statistics exam `statistiknote_w1` using the other variables, while allowing LASSO regression to select the most relevant features.
+
+
+
+# Data preparation
+
+First, we need to install and load the required packages.
+
+```{r, warning=F, message = F}
+#install.packages("caret")
+#install.packages("glmnet")
+
+# Load the libraries
+library(caret)
+library(glmnet)
+library(tidyverse)
+library(dplyr)
+```
+
+
+We use the pre-processed survey data and only keep those variables that we identify as potential predictors. 
+
+```{r}
+data <- read.csv("../00_data/survey/survey_processed.csv")
+
+
+data <- data %>%
+  select(-c(id, has_siblings, avg_mathenote, einkommen, age, risiko, geburtsbundesland_name)) %>% 
+  drop_na() %>% # just for illustrational purposes, never just drop missings! 
+  mutate_at(c("female", "risk_affine", "alkohol", "sport", "sidejob", "organ_donor", "erstfach_name"), as.factor)
+
+```
+
+# Model training
+We saw earlier, that the strength of our regularization depends on the parameter $\lambda$. Choosing the optimal
+value for this parameter is crucial, because it balances the trade-off between model complexity and prediction accuracy.
+
+If $\lambda$ is too small, the model might overfit, including irrelevant predictors. If it's too large, important predictors may be overly penalized and not included in the model. 
+
+**How do we find the optimal value?** We split our data into a training and a test dataset. The training data is only used to find the optimal value for out parameter $\lambda$. This process is called training or model tuning. 
+
+```{r}
+# Split the data into training and test data
+set.seed(123) # For reproducibility
+trainIndex <- createDataPartition(data$statistiknote_w1, p = 0.7, list = FALSE)
+nrow(data)
+length(trainIndex)
+
+trainData <- data[trainIndex, ]
+testData <- data[-trainIndex, ]
+dim(trainData)
+dim(testData)
+```
+
+One important step before running the LASSO model is the **standardization of the predictor variables**. Continuous predictors must scaled to have a mean of 0 and a standard deviation of 1, because the LASSO penalty (L1 norm) depends on the magnitude of the regression coefficients. Without standardization, predictors with larger scales would dominate the penalty term, making LASSO disproportionately shrink the coefficients of variables with smaller scales, even if they are important. Standardizing ensures that all predictors are on the same scale, allowing LASSO to fairly penalize and select the most relevant variables based on their predictive power, not their original units.
+
+*Important:* The order of the data preparation matters! The correct approach is to divide your data into training and test subsets and then apply the standardization (instead of standardizing before splitting). Why does this matter? If you standardize using the entire dataset, you unintentionally expose information from the test set (which you should not know) to the training process. This is known as data leakage.
+    
+
+```{r}
+# Standardize the continous predictors 
+
+# Identify the numerical columns, except for 'statistiknote_w1'
+numerical_vars <- setdiff(names(trainData)[sapply(trainData, is.numeric)], "statistiknote_w1")
+
+# Apply pre-processing (center and scale) only to the selected numerical columns
+preProcValues <- preProcess(trainData[, numerical_vars], method = c("center", "scale"))
+
+# Standardize the training data (excluding 'statistiknote_w1')
+trainData[, numerical_vars] <- predict(preProcValues, trainData[, numerical_vars])
+
+# Standardize the test data (excluding 'statistiknote_w1')
+testData[, numerical_vars] <- predict(preProcValues, testData[, numerical_vars])
+```
+
+
+Let's create a visualization of the divided dataset. 
+
+
+```{r, warnings = FALSE}
+
+library(waffle)
+
+# Calculate the number of points in train and test subsets
+train_size <- nrow(trainData)
+test_size <- nrow(testData)
+
+# Create a data frame with the counts for waffle plot
+data_proportion <- c(`Train Data` = train_size, `Test Data` = test_size)
+
+# Create the waffle plot
+waffle(data_proportion / sum(data_proportion) * 100, 
+       rows = 10, # Adjust number of rows for granularity
+       title = "Proportion of Data Points in Training and Test Sets",
+       colors = c("#44AA99", "#CC6677"))
+
+```
+
+
+
+
+
+We'll use the `train()` function and specify the method to be cross-validation (`cv`). Cross-validation is a technique used to evaluate the performance of a model and find optimal hyperparameter values, by splitting the dataset (the training data) into multiple subsets, or ''k-folds''. The idea is the following, **for each value of $\lambda$** (we specify which $\lambda$ we want to try):
+
+- The dataset is divided into k equal parts (folds).
+- The model is trained on k-1 folds and validated on the remaining fold.
+- This process is repeated k times, each time with a different fold as the validation set.
+- The performance is averaged across all folds, and the model selects the $\lambda$ that yields the best overall performance.
+
+
+![](figures/CV.png)
+
+
+```{r}
+set.seed(12345)
+# Set up the training control
+# Define cross-validation as the method and 10 folds 
+train_control <- trainControl(method = "cv", number = 10)
+
+# Train the LASSO model
+lasso_model <- train(
+  # use 'statistiknote_w1' as the dependent and all others as independent variables
+  statistiknote_w1 ~ ., 
+  # specify the training data
+  data = trainData,
+  # We want to use the LASSO method (glmnet)
+  method = "glmnet",
+  # Use the predefined training specification
+  trControl = train_control,
+  # Define what values for lambda we should try (tuning)
+  tuneGrid = expand.grid(alpha = 1, lambda = seq(0.01, 0.2, by = 0.001))  
+)
+
+# Display the best lambda value and model summary
+print(lasso_model$bestTune)
+#print(lasso_model)
+
+# Visualize the cross-validation results
+plot(lasso_model)
+
+```
+
+
+# Model evaluation 
+
+**Why evaluate at all?**
+A model isn't *good* because it fits the training data. It's good if it *generalizes* and supports the decision you care about. Evaluation tells us if we're actually meeting that goal, that means if the model predicts the outcome well.
+
+
+1. **R-squared**: measures the proportion of the variance in the dependent variable that is explained by the independent variables. In the case of LASSO, since it may shrink coefficients to zero (variable selection), R-squared gives insight into how well the remaining variables explain the variable of interest. It ranges from 0 to 1, where:
+  - 0 means the model explains none of the variability (a poor fit).
+  - 1 means the model perfectly explains the variability (a perfect fit).
+  
+The formula for R-squared is:
+
+\[
+R^2 = 1 - \frac{\sum_{i=1}^{n} (y_i - \hat{y}_i)^2}{\sum_{i=1}^{n} (y_i - \bar{y})^2}
+\]
+Where:
+
+  - \( y_i \): Actual observed values
+  - \( \hat{y}_i \): Predicted values from the model
+  - \( \bar{y} \): Mean of the observed values
+
+2. **RMSE** gives a sense of how far the model's predictions are from the true values, on average. In LASSO regression, since it imposes penalties on large coefficients. The lower the RMSE, the better the model's predictions. The RMSE is expressed in the same unit as the dependent variable.
+The formula for RMSE is:
+
+\[
+RMSE = (\frac{1}{n} \sum_{i=1}^{n} (y_i - \hat{y}_i)^2)^{-1/2}
+\]
+
+Where:
+
+  - \( y_i \): Actual observed values
+  - \( \hat{y}_i \): Predicted values from the model
+  - \( n \): Number of observations
+
+```{r}
+# Predict on the test set
+predictions <- predict(lasso_model, newdata = testData)
+
+# Calculate RMSE and R-squared
+rmse <- RMSE(predictions, testData$statistiknote_w1)
+r2 <- R2(predictions, testData$statistiknote_w1)
+
+# Print the evaluation metrics
+print(paste0("RMSE: ", rmse))
+print(paste0("R-squared: ", r2))
+
+```
+
+* **Interpretation RMSE**: On average, the predicted test grades differ from the actual test grades by 0.62 grade points. Given that the test grades increase in 0.3 increments, a 0.62 RMSE implies that the model's predictions are approximately two increments (2 × 0.3 = 0.6) away from the actual grades. This means:
+  - If the actual grade is 2.7, the predicted grade could be anywhere from 2.01 to 3.39 on average.
+  - If the actual grade is 3.0, the predicted grade might vary between 2.31 and 3.69 on average.
+
+* **Interpretation R-Squared**: 27% of the variance in the test grades is explained by the model's predictors. While the model captures some relationship between the predictors and the test grades, a significant portion of the variability in the test grades remains unexplained.
+
+
+
+# Interpretation of the model coefficients
+The LASSO model shrinks some of the coefficients to zero, effectively selecting the most important features. We can extract and visualize the coefficients of the final model.
+
+The `coef()` function extracts the coefficients of the predictors from the model for a given value of $\lambda$. These coefficients tell us the size and direction of the relationship between each predictor and the dependent variable (expected exam grade in this case).
+
+```{r}
+# Extract the coefficients of the best model
+
+# lasso_model$finalModel: This represents the final fitted LASSO model. 
+# It contains all the information about the LASSO model after it has been 
+# trained, including the coefficients for each predictor.
+
+# lasso_model$bestTune$lambda: This is the optimal lambda value selected during
+# the cross-validation process.
+coef(lasso_model$finalModel, lasso_model$bestTune$lambda)
+
+```
+
+Example interpretation: 
+
+- `female` has a zero coefficient and was therefore not selected as an important predicor in the model.
+- `abiturnote` has a positive relationship with `statistiknote_w1`. This means, a one-unit increase in the high school degree grade is associated with a 0.09 point increase in the expected exam grade.
+- `Intercept`: The average test grade is 3 for students in the reference category (e.g., males with a major in BWL), assuming that the continuous predictors (commute, pairs of shoes, etc.) are at their mean values.
+
+When we plot the final model using the `plot` function, it displays how the coefficients of the predictors change as $\lambda$ increases.
+
+```{r}
+# Visualize the lasso model
+
+# xvar = "lambda": The x-axis in the plot will represent the different values 
+# of lambda.
+# label = TRUE: This adds labels to the plot so that each line is labeled 
+# with the name of the corresponding predictor.
+plot(lasso_model$finalModel, xvar = "lambda", label = TRUE)
+
+```
+
+
+The plot shows multiple lines (one for each predictor). As lambda increases:
+
+- The lines for less important predictors will move towards zero and eventually flatten out at zero, indicating they are no longer part of the model.
+- The lines for more important predictors will remain non-zero for longer, indicating they are retained in the model for higher values of lambda.
+
+
+# Summary
+
+In summary, LASSO regression is a powerful technique that adds regularization to linear models to handle high-dimensional datasets and prevent overfitting. In the context of our study, where we aim to predict expected test grades based on a variety of personal characteristics, LASSO helps us identify the most relevant variables while controlling for overfitting. The process of standardizing continuous predictors ensures that all variables are on the same scale, allowing the LASSO penalty to treat them equally. Cross-validation plays a key role in selecting the optimal regularization parameter, $\lambda$, ensuring the model's balance between complexity and performance.
+
+::: {.task-box}
+# 10 Min Classroom Task
+![](figures/teamwork.png){width=60px fig-align="center"}
+
+  * **1. Train LASSO:** Use the provided train/test split to fit a LASSO model predicting `mathenote`. Report the selected variables.
+  * **2. OLS baseline:** Fit an ordinary least squares model on the same predictors and outcome.
+  * **3. Compare:** Do the LASSO-selected variables overlap with the statistically significant OLS variables? 
+  
+:::
+
+
+# Sources {.unlisted .unnumbered}
+
+- An introduction to the `glmnet`package: [link](https://glmnet.stanford.edu/articles/glmnet.html). 
+
+- James, G., D. Witten, T. Hastie, and R. Tibshirani. 2013. An Introduction to Statistical Learning. Edited by G. Casella, Fienberg S, and I. Olkin. New York: Springer.
+
+- Jackson, S. 2024. Machine Learning, Chapter 4: The LASSO. Bookdown.: [link](https://bookdown.org/ssjackson300/Machine-Learning-Lecture-Notes/the-lasso.html)
+
+- A short introduction to LASSO from the University of Sydney: [link](https://bookdown.org/tpinto_home/Regularisation/lasso-regression.html).
+
+&nbsp;
+\

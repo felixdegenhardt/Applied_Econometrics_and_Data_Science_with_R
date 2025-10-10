@@ -1,0 +1,119 @@
+---
+title: "Applied Econometrics and Data Science with R - Prerequisites"
+author: "Felix Degenhardt & Sophie Wagner"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: flatly
+    highlight: tango
+    toc: false
+    toc_float: true
+    df_print: paged
+---
+
+## Welcome
+
+Welcome to the course `Applied Econometrics and Data Science with R`! We're excited to spend the next weeks with you and the great statistical programming language R. At the end of the course, students will be able to:
+
+1. **Work with data in R**  
+   Clean, organize, and analyze large datasets to answer real economic research questions.
+
+2. **Write clear and professional code**  
+   Produce easy-to-read R code that creates high-quality tables, graphs, and results.
+
+3. **Make and explain data decisions**  
+   Explain your choices when processing data and compare different methods (including basic machine learning tools) using objective measures.
+
+&nbsp;
+\
+
+
+## Assignments throughout the course
+
+You will work on one project throughout the course **in teams of two to three**! Projects are assigned after the second block, `tidyverse`. At that time, you will receive detailed information on the topics. Your project is designed to help you practice all learning outcomes:
+
+* working with real data in R,
+
+* writing clear and professional code, and 
+
+* making and justifying data decisions.
+
+
+
+
+&nbsp;
+\
+&nbsp;
+
+
+# Requirements and Grading
+## Ungraded
+ i) Midterm submission (ungraded)
+ ii) Presence in the seminar (ungraded)
+ iii) Participation in in-class coding task (ungraded)
+ 
+## Graded
+### 1) R Markdown Project (75%)
+
+This is the main deliverable of the course. Your R Markdown document should be fully reproducible and structured like a professional research report.
+
+**We will grade on the following dimensions:**
+
+* **Quality of Analysis (40%)**
+   * Appropriate data transformations, wrangling, and cleaning.
+   * Plausible sample restrictions \& handling of missing data and outliers.
+   * Use of suitable models and methods.
+   * Results clearly linked back to the research question.
+   * ***Master students:*** Include advanced tuning and evaluation of models and comparison of at least two different modeling approaches with justification for final choice.
+
+* **Data Visualization and Interpretation (20%)**
+   * Use of clear, accurate, and professional visualizations (tables and graphs).
+   * Ability to interpret descriptive statistics and model results correctly.
+   * Visualizations should support the narrative (not just decoration).
+   * ***Master students:*** Include critical discussion of models, potential strengths and weaknesses as well as justification for final choice. 
+
+* **Code Quality and Efficiency (20%)**
+   * Code is clear, readable, and avoids redundancy.
+   * Proper commenting and use of functions when appropriate.
+   * Code reflects clean coding principles (consistent naming, modular structure).
+   * ***Master students:*** Focus on use of functions, particularly in model tuning.
+
+* **Formatting and Presentation (10%)**
+   * Document is well structured with headings, consistent formatting, and a logical flow.
+   * Output is clean (no unnecessary console messages or warnings).
+   * Professional tone and style.
+
+* **Reproducibility (10%)**
+   * Anyone should be able to run your document from start to finish.
+   * Required packages are loaded at the beginning.
+   * Paths and working environment are set correctly.
+   * No missing files or external dependencies.
+
+### 2) Poster Presentation (25%)
+
+At the end of the semester, you will present your project in a poster session (**A0 size**, **10-15-minute presentation + 5-10-minute Q&A**). This is your chance to communicate your analysis and defend your decisions.
+
+**We will grade on the following dimensions:**
+
+* **Poster Content and Design (30%)**
+   * Clear research question and motivation.
+   * Concise description of methods and results.
+   * Key figures and tables included, readable from a distance.
+   * Good balance of text and visuals — not too crowded, not too sparse.
+   * Poster is self-explanatory for someone who has not seen the project before.
+
+* **Presentation Delivery (30%)**
+   * Confident and clear oral explanation of your project (5 minutes).
+   * Ability to highlight the main points in a short amount of time.
+
+* **Q&A and Justification (40%)**
+   * Ability to justify choice of methods and interpretation of results.
+   * Demonstrates critical thinking (pros/cons of different approaches).
+   * Answers questions directly and thoughtfully.
+   * ***Master students:*** Expected to demonstrate deeper methodological understanding, discuss limitations and potential extensions, and engage with potential use cases in economic research during Q&A
+
+
+
+&nbsp;
+\
+&nbsp;

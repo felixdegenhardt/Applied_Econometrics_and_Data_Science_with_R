@@ -1,0 +1,740 @@
+---
+title: "Applied Econometrics and Data Science with R - Introduction to Github"
+author: "Felix Degenhardt & Sophie Wagner"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: flatly
+    highlight: tango
+    toc: true
+    toc_float: true
+    df_print: paged
+---
+
+```{css, echo=FALSE}
+.task-box {
+  background-color: #e8f4f8;
+  border-left: 5px solid #2c7fb8;
+  padding: 20px;
+  margin: 20px 0;
+  border-radius: 5px;
+}
+```
+
+
+::: {.task-box}
+# 2-3-Min Classroom Task: Collaboration on projects {.unlisted .unnumbered}
+
+![](teamwork.png){width=80px}
+
+Discuss with your neighbor the following question:
+
+- How would you intuitively collaborate with colleagues on a joint R project, or joint writing? 
+- What issues would you anticipate? 
+
+:::
+
+
+
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Motivation
+
+## Why GitHub?
+
+**Version Control**: Track every change to your code, revert to previous versions, and understand what changed, when, and why. No more files named "final_v2_FINAL_actualfinal.R"!
+
+**Collaboration**: Work seamlessly with others on the same project. Multiple people can work on different parts of a project simultaneously without overwriting each other's work.
+
+**Backup & Accessibility**: Your code is stored in the cloud, accessible from anywhere. If your laptop crashes, your work is safe. GitHub is actually the online platform where you can store, share, and collaborate on Git repositories. Git is the version control system that tracks changes locally on your computer. So using Git (and GitHub), you can work offline, making changes and tracking versions on your own machine. When you're ready, you push those changes to GitHub to share with others or backup your work.
+
+**Professional Development**: GitHub is the industry standard for sharing code. Having a GitHub profile with well-documented projects showcases your skills to potential employers and collaborators. You can also use GitHub to create your own website! 
+
+### GitHub Desktop
+
+**Visual Interface**: GitHub Desktop provides a user-friendly graphical interface for Git, making version control more accessible without needing to memorize commands.
+
+**Simplified Workflow**: See your changes visually, stage files with checkboxes, and manage repositories with simple clicks instead of typing commands.
+
+
+## Basic GitHub Concepts
+
+**Repository (Repo)**: A repository is essentially a project folder that contains all your files and the complete history of changes. Think of it as a special folder that remembers everything.
+
+**Commit**: A commit is a snapshot of your project at a specific point in time. Each commit records what changed and includes a message describing the change.
+
+**Push**: Pushing means uploading your local commits to GitHub so others can see your changes and your work is backed up in the cloud.
+
+**Pull**: Pulling means downloading changes from GitHub to your local computer. This ensures you're working with the most up-to-date version.
+
+**Clone**: Cloning means creating a local copy of a repository from GitHub onto your computer so you can work on it.
+
+**Fork**: Forking means creating a local copy of a repository from GitHub onto your computer so you can work on it. In contrast to cloning, forking creates your own version where you can make changes and edits without touching the original version. **This may be a good fit for the course repository!**
+
+**Branch**: A branch is a parallel version of your repository. It allows you to work on new features without affecting the main codebase.
+
+**Staging**: Before you commit changes, you stage them. This means selecting which changes you want to include in your next commit. It's like packing a box before shipping it.
+
+**Remote**: The remote is the version of your repository stored on GitHub's servers. Your local repository on your computer connects to this remote version.
+
+## Rules for Using GitHub Effectively
+
+Using GitHub well requires developing good habits early on. These practices will make your life easier and help others understand your work.
+
+1. **Commit often with clear messages**. Each commit should represent a logical unit of work. Your commit message should explain *what* you changed and *why*.
+
+2. **Pull before you push**. Always update your local repository with the latest changes from GitHub before pushing your own changes to avoid conflicts.
+
+3. **Use a .gitignore file**. Not everything should be tracked by Git. Exclude large data files, sensitive information, and temporary files.
+
+4. **Write a good README**. Every repository should have a README.md file that explains what the project does, how to use it, and how to contribute.
+
+5. **Branch for new features**. Don't make major changes directly to the main branch. Create a new branch, make your changes, test them, and then merge.
+
+6. **Don't Panic**! You can (almost) always revert changes, so if you get error messages, look for solutions in the internet, the public documentation of GitHub is amazing. You can also always ask us.
+
+# Getting Started with GitHub
+
+### Step 1: Create a GitHub Account
+
+Go to [github.com](https://github.com) and sign up for a free account. 
+
+### Step 2: Install GitHub Desktop
+
+Go to [desktop.github.com](https://desktop.github.com) and download GitHub Desktop for your operating system (Mac or Windows).
+
+### Step 3: Sign In to GitHub Desktop
+
+Open GitHub Desktop and click "Sign in to GitHub.com". Enter your GitHub username and password. GitHub Desktop will automatically connect to your account. You may be asked for two-factor authentification.
+
+### Step 4: Configure GitHub Desktop
+
+After signing in, GitHub Desktop will ask you to configure Git. It should automatically fill in your name and email from your GitHub account. If not, enter your name (as you want it to appear in commits) and your email address (the same one used for your GitHub account). 
+
+# Creating Your First Repository
+
+Remember, a repository is essentially your project folder. So you will have a local repository on your computer and a remote repository on GitHub. Let's create a repository first in the most simple way:
+
+## Creating a repository: Start on GitHub
+
+**Step 1:** On GitHub, click the "+" icon in the top right and select "New repository"
+
+**Step 2:** Give your repository a name (e.g., "my-first-repo"). Use lowercase and hyphens instead of spaces.
+
+**Step 3:** Add a description (optional but recommended)
+
+**Step 4:** Choose "Private" (you "Public" repositories are visible to everyone!)
+
+**Step 5:** Check "Add a README file"
+
+**Step 6:** Add a .gitignore template. Select "R" from the dropdown to automatically exclude common R files.
+
+**Step 7:** Click "Create repository"
+
+**Step 8:** In GitHub Desktop, go to **File → Clone Repository**
+
+**Step 9:** Select your new repository from the list and choose where to save it on your computer
+
+**Step 10:** Click "Clone"
+
+Now you have a local copy of your repository!
+
+# Cloning a Repository
+
+To work on an existing GitHub repository (for example, our [course repository](https://github.com/felixdegenhardt/Applied_Econometrics_and_Data_Science_with_R) ) on your computer:
+
+**Step 1:** In GitHub Desktop, go to **File → Clone Repository**
+
+**Step 2:** You'll see three tabs:
+
+- **GitHub.com**: Shows repositories from your GitHub account
+- **GitHub Enterprise**: For organizational accounts
+- **URL**: For cloning any repository by pasting its URL
+
+**Step 3:** Select the repository you want to clone
+
+**Step 4:** Choose where to save it on your computer (Local Path)
+
+**Step 5:** Click "Clone"
+
+GitHub Desktop will download the repository to your computer.
+
+# Basic Git Workflow with GitHub Desktop
+
+## The Three-Stage Process
+
+Git uses a three-stage process to track changes:
+
+1. **Working Directory**: Where you make changes to your files
+2. **Staging Area**: Where you prepare changes for a commit
+3. **Repository**: Where committed changes are permanently stored
+
+GitHub Desktop makes this process visual and intuitive!
+
+## Making Your First Commit
+
+**Step 1:** Open your repository folder and make changes to a file or create a new file
+
+For example, create a new R script called `analysis.R`:
+
+```{r, eval=FALSE}
+# My first analysis
+x <- 1:10
+mean(x)
+```
+
+**Step 2:** Save the file
+
+**Step 3:** Open GitHub Desktop – it automatically detects the changes!
+
+**Step 4:** In the left sidebar, you'll see a list of changed files. Each file has a checkbox next to it. By default, all changed files are checked (staged).
+
+**Step 5:** You can click on a file to see exactly what changed. Green highlights show additions, red shows deletions.
+
+**Step 6:** If you want to commit only some files, uncheck the ones you don't want to include.
+
+**Step 7:** In the bottom-left corner, write a commit message:
+
+- **Summary** (required): A brief description (e.g., "Add initial analysis script")
+- **Description** (optional): More details about what you changed and why
+
+**Step 8:** Click the blue **Commit to main** button
+
+Your changes are now saved in your local repository!
+
+## Pushing to GitHub
+
+After committing locally, you need to push your changes to GitHub:
+
+**Step 1:** In GitHub Desktop, look at the top bar. You'll see a button that says **Push origin** with a number indicating how many commits are ready to push.
+
+**Step 2:** Click **Push origin**
+
+**Step 3:** GitHub Desktop will upload your commits to GitHub
+
+**Step 4:** Go to your repository on GitHub in your browser and refresh the page – you'll see your changes!
+
+## Pulling from GitHub
+
+If others have made changes, or if you've worked on a different computer, you need to pull those changes:
+
+**Step 1:** In GitHub Desktop, the top bar will show **Fetch origin** 
+
+**Step 2:** Click **Fetch origin** to check for new changes
+
+**Step 3:** If there are new changes, the button will change to **Pull origin**
+
+**Step 4:** Click **Pull origin** to download the changes
+
+GitHub Desktop will update your local files with the latest changes from GitHub.
+
+**Best Practice:** Click "Fetch origin" at the start of each work session to check for updates!
+
+
+
+::: {.task-box}
+# 10-Min Classroom Task: Create your first repository {.unlisted .unnumbered}
+
+![](teamwork.png){width=80px}
+
+Try to set up GitHub on your laptop. If you are already experienced, try to help others. 
+
+1. **Create a new repository** on GitHub called "r-learning" with a README and R .gitignore
+2. **Clone the repository** to your computer using GitHub Desktop
+3. **Create a new R script** called `first_analysis.R` that has a vector (e.g. vec <- c(2,5,7)) and that calculates the mean of this vector
+4. **Open GitHub Desktop** and view your changes
+5. **Commit your changes** with the message "Add first analysis script"
+6. **Push to GitHub** and verify your file appears on the website
+7. **Make an edit** to your R script (add a comment or another calculation)
+8. **Commit and push** the new changes with an appropriate message
+
+
+:::
+
+
+## Viewing Your History
+
+In GitHub Desktop, click the **History** tab (next to "Changes") to see all past commits. Click on any commit to see:
+
+- Who made the commit
+- When it was made
+- The commit message
+- Exactly what changed in each file
+
+You can also right-click on a commit to:
+
+- Revert the commit (undo it)
+- Create a branch from this commit
+- Copy the commit SHA (a unique identifier)
+
+# Working with .gitignore
+
+A `.gitignore` file tells Git which files to ignore. This is crucial for keeping your repository clean and avoiding accidentally sharing sensitive information. For example, **never** include data like the SOEP in your remote GitHub. Instead, store them in your computer and add the data to the .gitignore file. You can check if the ignoring works if the files are not staged. You can also add whole folders. If you want to be completely sure, safe the data outside of the folder used for GitHub.
+
+## Creating a .gitignore file
+
+If you didn't select a .gitignore template when creating your repository, you can add one:
+
+**Step 1:** In your repository folder, create a new text file called `.gitignore` (with the dot!)
+
+**Step 2:** Add patterns for files you want Git to ignore
+
+## Common files to ignore in R projects:
+
+```{bash, eval=FALSE}
+# R History files
+.Rhistory
+.Rapp.history
+
+# RStudio files
+.RData
+.Rproj.user/
+
+# Data files (often too large for GitHub)
+*.csv
+*.xlsx
+*.dta <- Stata files
+
+# Output files are possible, but we actually want them. Why would it make sense to still exclude them? 
+*.pdf
+*.html 
+
+# MacOS files
+.DS_Store
+
+# Windows files
+Thumbs.db
+
+# Sensitive information
+config.R
+passwords.txt
+```
+
+**Step 3:** Save the .gitignore file
+
+**Step 4:** In GitHub Desktop, commit the .gitignore file with a message like "Add .gitignore for R projects"
+
+**Step 5:** Push to GitHub
+
+Files matching these patterns will no longer appear in GitHub Desktop's changes list.
+
+
+# Working with Branches
+
+## What are Branches and Why Use Them?
+
+Think of branches as parallel universes for your code. When you create a branch, you're creating a separate timeline where you can make changes without affecting your main code. This is incredibly useful because:
+
+**Safety**: You can experiment freely without worrying about breaking working code. If your edits fail, you simply delete the branch and your main code is untouched. 
+
+**Organization**: Different team members can work on different features simultaneously without interfering with each other's work.
+
+**Testing**: You can try out new ideas, and only merge them into your main code once you're confident they work well.
+
+### A Real-World Example {.unlisted .unnumbered}
+
+Let's say you already started with your assessment. Your main branch has working code that cleans data and creates basic plots. Now you want to add a fancy interactive visualization, but you're not sure if it will work.
+
+**Without branches**: You'd edit your main code directly. If the new visualization breaks something, you'd have to frantically undo changes or restore from an old version.
+
+**With branches**: You create a new branch called "interactive-viz", work on the visualization there, and test it thoroughly. If it works great, you merge it into main. If not, you delete the branch and your main code was never touched.
+
+## Understanding the Main Branch
+
+Every repository starts with one branch, usually called **main** (or sometimes **master** in older repositories). Think of this as your "official" or "production" code – the version that works and that you'd share with others.
+
+When you're just starting out and working alone, you might only ever use the main branch. That's perfectly fine! Branches become more important as projects grow or when collaborating with others.
+
+## Visualizing Branches
+
+Here's a simple way to think about it:
+
+```
+main branch:     A --- B --- C --- D
+                              \
+new branch:                    E --- F
+```
+
+- Points A, B, C, D are commits on the main branch
+- At point C, you created a new branch (for example, when you want to experiment around with something)
+- Points E and F are commits on the new branch
+- The main branch doesn't have E and F (yet)
+- The new branch has A, B, C (inherited from main) plus E and F
+- If you're happy with the changes in E and F, you can merge them again to the main branch
+- **Always** check in which branch you're working on! You don't want to have a messy branch structure, ideally you would have smaller commits to the main branch instead of huge and messy new branches! --> see below!
+
+## Creating a New Branch
+
+**Step 1:** In GitHub Desktop, click the **Current Branch** dropdown at the top
+
+**Step 2:** Click **New Branch**
+
+**Step 3:** Give your branch a descriptive name. Good naming conventions:
+- Use lowercase with hyphens: "add-visualization" not "Add Visualization"
+- Be specific: "fix-age-calculation-bug" not "fixes"
+- Describe what the branch does: "update-readme" or "experiment-with-colors"
+
+**Step 4:** Click **Create Branch**
+
+You're now working on the new branch! Notice that:
+- All your files look exactly the same (the branch started as a copy of where you were)
+- The top of GitHub Desktop now shows your new branch name
+- Any commits you make will be on this branch only
+
+## Working on a Branch
+
+Once you're on a branch, your workflow is exactly the same:
+
+1. Make changes to your files
+2. Save them
+3. GitHub Desktop detects the changes
+4. Write a commit message and commit
+5. Push to GitHub (this pushes your branch, not main)
+
+The key difference: these changes are isolated to this branch. If you switch back to main, these changes will disappear (don't worry, they're not lost – they're still on the branch!).
+
+## Switching Between Branches
+
+**Step 1:** Click the **Current Branch** dropdown
+
+**Step 2:** Select the branch you want to switch to
+
+**Important**: When you switch branches, your files will physically change on your computer! 
+
+### Example {.unlisted .unnumbered}
+
+Let's say on the main branch, your `analysis.R` file looks like this:
+
+```{r, eval=FALSE}
+# Basic analysis
+x <- 1:10
+mean(x)
+```
+
+On your "add-visualization" branch, it looks like this:
+
+```{r, eval=FALSE}
+# Basic analysis
+x <- 1:10
+mean(x)
+
+# New visualization
+plot(x, main = "My Data")
+```
+
+When you switch from "add-visualization" to "main", the plot code will disappear from your file. When you switch back to "add-visualization", it will reappear! This is normal and expected – GitHub Desktop is updating your files to match the branch.
+
+**Warning**: GitHub Desktop won't let you switch branches if you have unsaved changes. You must either commit your changes or discard them first.
+
+## Merging Branches
+
+Once you're happy with changes on a branch and want to incorporate them into main, you **merge** the branch. Merging takes the commits from one branch and adds them to another.
+
+### The Merging Process {.unlisted .unnumbered}
+
+**Step 1:** Make sure all your changes on the feature branch are committed and pushed
+
+**Step 2:** Switch to the main branch (Click **Current Branch** → select "main")
+
+This is important! You merge INTO the branch you're currently on. Since you want to merge changes INTO main, you need to be ON main.
+
+**Step 3:** In the menu, go to **Branch → Merge into Current Branch**
+
+**Step 4:** Select the branch you want to merge (e.g., "add-visualization")
+
+**Step 5:** Click **Merge**
+
+**Step 6:** If there are no conflicts, your changes are now in main! GitHub Desktop will show a success message.
+
+**Step 7:** Push to GitHub to upload the merged changes
+
+Now your main branch has all the changes from your feature branch! You can see this also in the overview of the different branches!
+
+### After Merging {.unlisted .unnumbered}
+
+After successfully merging, you can and should:
+- Delete the feature branch (it's no longer needed since its changes are now in main)
+- Keep working on main
+- Create a new branch for your next feature
+
+To delete a branch in GitHub Desktop: Click **Branch → Delete** and select the branch. Don't worry – the commits are still in main!
+
+## Understanding Merge Conflicts
+
+Sometimes Git can't automatically merge branches because the same lines of code were changed differently in both branches. This is called a **merge conflict**.
+
+### When Do Conflicts Happen? {.unlisted .unnumbered}
+
+Example scenario:
+1. In the main branch, line 5 of `analysis.R` says: `threshold <- 10`
+2. You create a branch and change line 5 to: `threshold <- 20`
+3. Meanwhile, someone else updates main and changes line 5 to: `threshold <- 15`
+4. When you try to merge, Git doesn't know which value to keep!
+
+### Resolving Conflicts {.unlisted .unnumbered}
+
+**Step 1:** GitHub Desktop will show conflicting files with a warning icon
+
+**Step 2:** Click on a conflicting file to see where the conflicts are
+
+**Step 3:** Click "Open in [your editor]" to edit the file
+
+**Step 4:** Look for conflict markers in your file:
+
+```{r, eval=FALSE}
+# Your code...
+
+<<<<<<< HEAD
+threshold <- 15
+=======
+threshold <- 20
+>>>>>>> add-visualization
+
+# More code...
+```
+
+The `<<<<<<< HEAD` section shows what's in the current branch (main).
+The `=======` separates the two versions.
+The `>>>>>>> add-visualization` section shows what's in the branch you're merging.
+
+**Step 5:** Decide which version to keep (or combine them), and delete the conflict markers:
+
+```{r, eval=FALSE}
+# Your code...
+
+threshold <- 20  # Keeping the new value from the branch
+
+# More code...
+```
+
+**Step 6:** Save the file
+
+**Step 7:** In GitHub Desktop, commit the resolved conflict with a message like "Resolve merge conflict in analysis.R"
+
+**Step 8:** Push to GitHub
+
+Conflicts can be intimidating at first, but they're Git's way of making sure you don't accidentally lose work. Take your time resolving them carefully!
+
+## Best Practices for Branches
+
+**Keep branches short-lived**: Create a branch, make your changes, merge it, and delete it. Don't let branches linger for weeks with hundreds of commits.
+
+**Pull main regularly**: If you're working on a branch for a while, periodically switch to main, pull the latest changes, then merge main into your branch. This prevents nasty conflicts later.
+
+**One feature per branch**: Don't create a branch called "improvements" where you fix bugs, add features, and update documentation. Create separate branches for each task.
+
+**Descriptive names**: Future you will thank past you for clear branch names.
+
+## When to Use Branches (Practical Guidelines)
+
+**Definitely use a branch when:**
+- Adding a major new feature
+- Experimenting with code you might not keep
+- Working with collaborators on the same repository
+- Trying to fix a complicated bug
+
+**You can skip branches when:**
+- You're working alone on a small personal project
+- Making tiny changes like fixing typos in comments
+- You're still learning Git and want to keep things simple
+
+As a beginner, it's perfectly fine to work only on the main branch until you're comfortable with the basic Git workflow. Once you're confident with committing, pushing, and pulling, branches will make more sense!
+
+# Best Practices
+
+## Commit Messages
+
+**Good commit messages:**
+
+- "Add data cleaning script for survey responses"
+- "Fix bug in calculation of average age"
+- "Update README with installation instructions"
+
+**Bad commit messages:**
+
+- "stuff"
+- "changes"
+- "asdfasdf"
+- "fixed it"
+
+Think: If someone reads this message in 6 months, will they understand what you did?
+
+## Commit Frequency
+
+Commit whenever you complete a logical unit of work. Good times to commit:
+
+- After fixing a bug
+- After adding a new feature
+- After completing a section of analysis
+- Before trying something risky
+- At the end of each work session
+
+Don't wait until you've changed 20 files to make your first commit!
+
+## README Files
+
+Every repository should have a `README.md` file that includes:
+
+1. **Project title and description**: What does this project do?
+2. **Installation instructions**: How do I get this running?
+3. **Usage examples**: How do I use it?
+4. **Dependencies**: What packages are needed?
+5. **Author information**: Who made this?
+6. **License** (optional): How can others use this code?
+
+You can edit the README directly on GitHub or in any text editor. It uses Markdown formatting (the same as R Markdown!).
+
+
+# Troubleshooting Common Issues
+
+**Problem**: GitHub Desktop doesn't detect my changes  
+**Solution**: Make sure you've saved the file. Try clicking "Fetch origin" to refresh. Check that the file isn't listed in .gitignore.
+
+**Problem**: "Push rejected" or "Push failed"  
+**Solution**: Someone else made changes. Click "Fetch origin" then "Pull origin" to get the latest changes before pushing again.
+
+**Problem**: Merge conflict  
+**Solution**: GitHub Desktop will show conflicting files with a warning icon. Click the file to see the conflicts. Edit the file in your text editor to resolve conflicts (remove the `<<<<<<<`, `=======`, and `>>>>>>>` markers), then commit the resolved version.
+
+**Problem**: Accidentally committed the wrong files  
+**Solution**: In the History tab, right-click the commit and select "Revert commit". This creates a new commit that undoes the changes.
+
+**Problem**: Can't see my .gitignore file  
+**Solution**: Files starting with a dot are hidden by default. On Mac, press `Cmd + Shift + .` in Finder. On Windows, enable "Show hidden files" in File Explorer options.
+
+Many more of the problems are already discussed in one of the many forums!
+
+
+# Advanced Topic: Pull Requests
+
+## What is a Pull Request?
+
+A **pull request (PR)** is a way to propose changes to a repository. It's essentially saying: "Hey, I made some changes on my branch. Can you review them and merge them into the main branch?"
+
+Think of it as a formal request that says "please **pull** my changes into your code."
+
+## Pull Request vs. Regular Merge
+
+**Regular merge (in GitHub Desktop)**:
+
+- You merge directly from one branch to another
+- No review process
+- Instant
+- Good for solo work or quick fixes
+
+**Pull Request (on GitHub website)**:
+
+- You propose a merge
+- Others can review and comment
+- Requires approval (in team settings)
+- Good for team work and quality control
+
+**Note**: Pull requests are an advanced topic. Focus on mastering the basics (commits, pushing, pulling, and branching) before worrying about pull requests!
+
+## Why Use Pull Requests?
+
+**Code Review**: Other people can look at your changes, comment on specific lines, suggest improvements, and approve or request changes before the code is merged.
+
+**Discussion**: PRs create a space to discuss the changes - why they're needed, how they work, potential issues, etc.
+
+**Quality Control**: Prevents broken code from entering the main branch. Someone else checks your work first.
+
+**Documentation**: PRs create a permanent record of what changed, why, and who approved it.
+
+## When Do You Need Pull Requests?
+
+**Collaborating with others**: If multiple people work on a repository, PRs ensure everyone's code is reviewed before merging.
+
+**Contributing to open source**: If you want to contribute to someone else's project, you fork their repo, make changes, and submit a PR asking them to accept your changes.
+
+**Team workflows**: Many teams require PRs even for your own branches as a quality control measure.
+
+**Working alone**: You generally DON'T need PRs. You can just merge branches directly in GitHub Desktop.
+
+## How Pull Requests Work (Basic Flow)
+
+**Step 1:** Create a branch and make your changes
+
+**Step 2:** Commit your changes and push the branch to GitHub
+
+**Step 3:** Go to your repository on GitHub's website
+
+**Step 4:** You'll see a yellow banner saying "Your recently pushed branches" with a button "Compare & pull request" - click it
+
+Alternatively, go to the "Pull requests" tab and click "New pull request"
+
+**Step 5:** Write a title and description:
+- **Title**: Brief summary (e.g., "Add data visualization feature")
+- **Description**: Explain what you changed and why. Include any relevant details that reviewers should know.
+
+**Step 6:** Select reviewers (if working with a team) by clicking the gear icon next to "Reviewers"
+
+**Step 7:** Click "Create pull request"
+
+**Step 8:** Reviewers will look at your code and leave comments. They might:
+- Approve the changes
+- Request changes
+- Ask questions
+- Suggest improvements
+
+**Step 9:** Address feedback by making more commits to the same branch. These new commits automatically appear in the pull request.
+
+**Step 10:** Once approved, click "Merge pull request" and then "Confirm merge"
+
+**Step 11:** Your changes are now in the main branch! You can safely delete the feature branch.
+
+
+## Example Workflow
+
+Let's say you're working on a team project to analyze survey data:
+
+1. You create a branch called "fix-age-variable"
+2. You fix a bug in the age variable construction code
+3. You commit and push the branch
+4. You create a pull request with title "Fix age calculation bug" and description explaining the bug and your fix
+5. Your teammate reviews the code and comments: "Good catch! Can you also add more comments to the code?"
+6. You add a comment, commit, and push (the PR updates automatically)
+7. Your teammate approves the PR
+8. You merge it into main
+9. Everyone on the team now has access to the bug fix
+
+## Tips for Good Pull Requests
+
+**Keep them small**: PRs with 50-200 lines of changes are easier to review than PRs with 1000+ lines. Break large features into smaller PRs.
+
+**Write clear descriptions**: Explain what you changed and why. Include screenshots if you changed something visual.
+
+**Respond to feedback**: If reviewers ask questions or request changes, respond promptly and thoughtfully.
+
+**Use draft PRs**: If you want early feedback before your code is ready, create a "draft" pull request (there's an option when creating the PR).
+
+**Link to issues**: If the PR fixes a bug tracked in GitHub Issues, mention it in the description (e.g., "Fixes #42").
+
+
+# Sources {.unlisted .unnumbered}
+
+- GitHub. (n.d.). *GitHub Docs*. Retrieved from https://docs.github.com
+
+- GitHub. (n.d.). *GitHub Desktop Documentation*. Retrieved from https://docs.github.com/en/desktop
+
+- GitHub. (n.d.). *GitHub Skills*. Retrieved from https://skills.github.com
+
+- Bryan, J. (n.d.). *Happy Git and GitHub for the useR*. Retrieved from https://happygitwithr.com
+
+- Chacon, S., & Straub, B. (2014). *Pro Git* (2nd ed.). Apress. Available at https://git-scm.com/book/en/v2
+
+Here is a slightly different version to how it is described here. Git is set up within R-Studio!
+
+- RStudio. (n.d.). *Using Version Control with RStudio*.  Retrieved from https://docs.posit.co/ide/user/ide/guide/tools/version-control.html
+
+Here you can find basics of how to use git through command lines (i.e. the terminal). This may be helpful when trying to restore previous versions
+
+- Software Carpentry. (n.d.). *Version Control with Git*. Retrieved from https://swcarpentry.github.io/git-novice/
+
+And here is a cheat sheet if you want to use command lines: 
+
+- Github. (n.d.). https://education.github.com/git-cheat-sheet-education.pdf

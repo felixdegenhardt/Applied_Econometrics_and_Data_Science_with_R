@@ -1,0 +1,47 @@
+---
+title: "How to create a poster"
+author: "Felix Degenhardt & Sophie Wagner"
+date: "`r Sys.Date()`"
+output: 
+  html_document:
+    theme: cosmo
+    toc: yes
+    toc_float:
+      collapsed: false
+    highlight: tango
+  html_notebook: default
+---
+
+# What is a good poster?
+
+Tja, was ist ein gutes Poster?
+
+# How to create a poster?
+
+## Using R-Markdown
+
+```{r , include=FALSE}
+install.packages("posterdown", repos = "http://cran.us.r-project.org")
+install.packages("servr", dependencies = T)
+```
+
+
+https://www.shilaan.com/post/academic-conference-posters-using-posterdown/ 
+https://github.com/brentthorne/posterdown/wiki
+
+
+```{r}
+pagedown::chrome_print("Poster_template_course/Poster_template.Rmd")
+
+```
+Formatierungen
+https://github.com/brentthorne/posterdown/wiki/posterdown_html
+
+
+## Using Latex
+
+Vorlage bereitstellen
+
+## Using PowerPoint
+
+Vorlage bereitstellen

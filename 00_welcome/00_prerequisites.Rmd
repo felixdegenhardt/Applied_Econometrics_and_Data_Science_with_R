@@ -1,0 +1,211 @@
+---
+title: "Applied Econometrics and Data Science with R - Prerequisites"
+author: "Felix Degenhardt & Sophie Wagner"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: flatly
+    highlight: tango
+    toc: false
+    toc_float: true
+    df_print: paged
+---
+
+## Welcome
+
+Welcome to the course `Applied Econometrics and Data Science with R`! We're excited to spend the next weeks with you and the great statistical programming language R. At the end of the course, you will be able to:
+
+1. **Work with data in R**  
+   Clean, organize, and analyze large datasets to answer real economic research questions.
+
+2. **Write clear and professional code**  
+   Produce easy-to-read R code that creates high-quality tables, graphs, and results.
+
+3. **Make and explain data decisions**  
+   Explain your choices when processing data and compare different methods (including basic machine learning tools) using objective measures.
+
+&nbsp;
+\
+
+
+## Course design and prerequisites
+The course consists of two main elements: Introduction to working with R and introduction to Machine learning. We will cover both topics in a very hands-on way, by giving you a basic understanding and then applying the concepts in class. We thus ask you to **participate in class and work on your projects during the semester**. Please also fill out this [5-min survey](https://forms.gle/ey2msVCa6bU7nggq8), that helps us understand the experiences and expectations of all of you. 
+
+To start smoothly and solve potential technical problems early, please make sure to **install all required software before the first session**.  
+
+### Installation checklist
+
+Please install the following:  
+
+- [R (latest version)](https://cran.r-project.org/)  
+- [RStudio Desktop](https://posit.co/download/rstudio-desktop/)  
+- [GitHub Desktop](https://desktop.github.com/)  
+- Create a [GitHub account](https://github.com/)  
+- Join the GitHub classroom/repository via this link: [Github repository](https://github.com/felixdegenhardt/Applied_Econometrics_and_Data_Science_with_R) 
+  
+
+
+The final version of the code and other course materials will be uploaded to both **Moodle** and **GitHub**.  
+
+## Structure 
+
+For this semester's course, we will meet each week on **Wednesdays, 12:15–13:45 in 3.06.S27**.  
+
+In each session, you will get input into some aspects of applied econometrics and data science and apply them right away.  One of the instructors will code live in class, while the other is available for technical assistance. **Please bring your laptop to each session and look at the content before class.**
+
+**Please bring your laptop to the seminars and have a look at the content before each session.**
+
+Here, you will find the detailed course content:
+
+```{r, echo=FALSE}
+library(knitr)
+library(kableExtra)
+
+# Create the data
+dates <- c("15th October 2025", 
+           "22nd October 2025", 
+           "29th October 2025", 
+           "5th November 2025", 
+           "12th November 2025", 
+           "19th November 2025", 
+           "26th November 2025", 
+           "3rd December 2025",
+           "10th December 2025",
+           "17th December 2025",
+           "7th January 2026",
+           "14th January 2026",
+           "21st January 2026",
+           "28th January 2026")
+
+topics <- c("Introduction to R, R-Markdown and Github",
+            "Introduction to R, R-Markdown and Github",
+            "Data Wrangling and the `tidyverse`",
+            "Data Wrangling and the `tidyverse`",
+            "Supervised Machine Learning",
+            "Supervised Machine Learning",
+            "Automations in R",
+            "Automations in R",
+            "The `ggplot2` package",
+            "The `ggplot2` package",
+            "Progress Talks",
+            "Spatial Applications/ How to present your results in a poster",
+            "Q&A and coding practicing",
+            "Final Poster Presentations")
+
+instructor <- c("Sophie & Felix", 
+                "Sophie & Felix", 
+                "Felix",
+                "Felix", 
+                "Sophie",
+                "Sophie",
+                "Felix",
+                "Felix",
+                "Sophie",
+                "Sophie",
+                "Sophie & Felix",
+                "Sophie & Felix",
+                # "Felix",
+                "Sophie & Felix",
+                "Sophie & Felix")
+
+notes <- c("Course registration",
+          "Upload of Topics & Team Assignment \n Final Course Registration on PULS until November 10th at the lastest",
+          "Assignment of Topics",
+           rep("", 7),
+          "Submission of Midterm Code until January 5, 12 pm!",
+          rep("", 3)
+)
+
+# Combine into a data frame
+schedule <- data.frame(Date = dates, Topic = topics, Instructor = instructor, Notes = notes)
+
+# Create the table
+kable(schedule, align = "l") %>%
+  kable_styling(bootstrap_options = c("striped", "hover", "condensed"))
+```
+
+
+## Assignments throughout the course
+
+You will work on one project throughout the course **in teams of two to three**! Projects are assigned before the second block, `tidyverse`. At that time, you will receive detailed information on the topics. Your project is designed to help you practice all learning outcomes:
+
+* working with real data in R,
+
+* writing clear and professional code,
+
+* and making and justifying data decisions.
+
+
+
+
+# Requirements and Grading
+## Ungraded
+ 1) Midterm submission (ungraded)
+ 2) Presence in the seminar (ungraded)
+ 3) Participation in in-class coding task (ungraded)
+ 
+## Graded
+1) R Markdown Project (75%)
+
+This is the main deliverable of the course. Your R Markdown document should be fully reproducible and structured like a professional research report.
+
+<!-- **We will grade on the following dimensions:** -->
+
+<!-- * **Quality of Analysis (40%)** -->
+<!--    * Appropriate data transformations, wrangling, and cleaning. -->
+<!--    * Plausible sample restrictions \& handling of missing data and outliers. -->
+<!--    * Use of suitable models and methods. -->
+<!--    * Results clearly linked back to the research question. -->
+<!--    * ***Master students:*** Include advanced tuning and evaluation of models and comparison of at least two different modeling approaches with justification for final choice. -->
+
+<!-- * **Data Visualization and Interpretation (20%)** -->
+<!--    * Use of clear, accurate, and professional visualizations (tables and graphs). -->
+<!--    * Ability to interpret descriptive statistics and model results correctly. -->
+<!--    * Visualizations should support the narrative (not just decoration). -->
+<!--    * ***Master students:*** Include critical discussion of models, potential strengths and weaknesses as well as justification for final choice.  -->
+
+<!-- * **Code Quality and Efficiency (20%)** -->
+<!--    * Code is clear, readable, and avoids redundancy. -->
+<!--    * Proper commenting and use of functions when appropriate. -->
+<!--    * Code reflects clean coding principles (consistent naming, modular structure). -->
+<!--    * ***Master students:*** Focus on use of functions, particularly in model tuning. -->
+
+<!-- * **Formatting and Presentation (10%)** -->
+<!--    * Document is well structured with headings, consistent formatting, and a logical flow. -->
+<!--    * Output is clean (no unnecessary console messages or warnings). -->
+<!--    * Professional tone and style. -->
+
+<!-- * **Reproducibility (10%)** -->
+<!--    * Anyone should be able to run your document from start to finish. -->
+<!--    * Required packages are loaded at the beginning. -->
+<!--    * Paths and working environment are set correctly. -->
+<!--    * No missing files or external dependencies. -->
+
+2) Poster Presentation (25%)
+
+At the end of the semester, you will present your project in a poster session (**A0 size**, **10-15-minute presentation + 5-10-minute Q&A**). This is your chance to communicate your analysis and defend your decisions.
+
+<!-- **We will grade on the following dimensions:** -->
+
+<!-- * **Poster Content and Design (30%)** -->
+<!--    * Clear research question and motivation. -->
+<!--    * Concise description of methods and results. -->
+<!--    * Key figures and tables included, readable from a distance. -->
+<!--    * Good balance of text and visuals — not too crowded, not too sparse. -->
+<!--    * Poster is self-explanatory for someone who has not seen the project before. -->
+
+<!-- * **Presentation Delivery (30%)** -->
+<!--    * Confident and clear oral explanation of your project (5 minutes). -->
+<!--    * Ability to highlight the main points in a short amount of time. -->
+
+<!-- * **Q&A and Justification (40%)** -->
+<!--    * Ability to justify choice of methods and interpretation of results. -->
+<!--    * Demonstrates critical thinking (pros/cons of different approaches). -->
+<!--    * Answers questions directly and thoughtfully. -->
+<!--    * ***Master students:*** Expected to demonstrate deeper methodological understanding, discuss limitations and potential extensions, and engage with potential use cases in economic research during Q&A -->
+
+
+
+&nbsp;
+\
+&nbsp;

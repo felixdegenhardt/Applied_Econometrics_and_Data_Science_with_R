@@ -1,0 +1,688 @@
+---
+title: "Applied Econometrics and Data Science with R - Introduction to Automation in R"
+author: "Felix Degenhardt & Sophie Wagner"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: flatly
+    highlight: tango
+    toc: true
+    toc_float: true
+    df_print: paged
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, warning = FALSE, message = FALSE)
+```
+
+```{css, echo=FALSE}
+.task-box {
+  background-color: #e8f4f8;
+  border-left: 5px solid #2c7fb8;
+  padding: 20px;
+  margin: 20px 0;
+  border-radius: 5px;
+}
+```
+
+# Introduction
+
+In data science, automation is key to improving efficiency and reproducibility. Today, we'll explore how to automate tasks in R using **loops** and **functions**. These are the fundamental building blocks that will help you avoid repetitive code and reduce errors.
+
+Why should you care about this? Found [here](https://www.shilaan.com/post/writing-reproducible-manuscripts-in-r/). 
+
+<iframe width="560" height="315" src="https://www.youtube.com/embed/s3JldKoA0zw" data-external= "1" allowfullscreen title="YouTube Video" > </iframe>
+
+**Real-world scenarios where automation helps:**
+
+- You need to run the same regression with 10 different outcome variables
+- You want to test your random forest with different training data subsets
+- You need to compare model performance across different pre-processing strategies
+- You want to tune parameters in a custom way that built-in functions don't support
+
+Also, you might need to share your analysis or pass it on to a colleague (or to course instructors). By automating the process, you ensure that the same steps are applied consistently each time, reducing the risk of human error. For instance, parameter tuning in machine learning models can be automated, ensuring that the same methods are applied across different datasets or projects, making your work more reproducible and easier to validate.
+
+By the end of this session, you'll be able to write functions and loops that make these tasks simple and reproducible.
+
+# Load Required Packages
+
+```{r}
+# Install and load packages -- Try to understand those loops and functions after the session!
+my_packages <- c("tidyverse", "ranger", "caret", "rpart", "rpart.plot", 
+                 "pROC", "kableExtra", "broom")
+
+for(p in my_packages){
+  if(!require(p, character.only = TRUE)) {
+    install.packages(p)
+  }
+  library(p, character.only = TRUE)
+}
+```
+
+# Load and Prepare Data
+
+```{r}
+# Load the dataset
+data <- read.csv("../00_data/survey/survey_processed.csv")
+
+# Check the data
+head(data)
+dim(data)
+```
+
+# Part 1: Loops 
+
+Loops allow you to repeat the same operation multiple times without copy-pasting code.
+
+## For Loops
+
+A `for` loop iterates over a sequence of values.
+
+```{r}
+# Simple example: Calculate squares
+for (i in 1:5) {
+  result <- i^2
+  print(paste("The square of", i, "is", result))
+}
+```
+
+## Storing Loop Results
+
+Usually, you want to save the results from your loop. Here's how:
+
+```{r}
+# Create empty vector to store results
+squares <- numeric(5)
+
+# Fill the vector using a loop
+for (i in 1:5) {
+  squares[i] <- i^2
+}
+
+squares
+```
+
+For more complex objects (like regression models), use a list:
+
+```{r}
+# Create empty list to store models
+models <- list()
+
+# Store different objects in the list
+for (i in 1:3) {
+  # Use different numbers of observations from our data
+  data_subset <- data[1:(50*i), ]
+  models[[i]] <- lm(statistiknote_w1 ~ female + fachsemester, data = data_subset)
+}
+
+# Access the second model
+summary(models[[2]])
+```
+
+::: {.task-box}
+### 5-Min Classroom Task: Loops {.unlisted .unnumbered}
+
+Write a loop that:
+
+1. Calculates the mean of `statistiknote_w1` for different sample sizes: first 50, 100, 150, 200, and 250 rows of the data
+2. Stores each mean in a vector
+3. Prints the results
+
+**Bonus:** Can you also store the standard deviation for each subset?
+
+```{r, eval=FALSE}
+# Your code here
+means <- numeric(5)
+sample_sizes <- c(50, 100, 150, 200, 250)
+
+for (i in 1:length(sample_sizes)) {
+  # Fill in the loop
+}
+```
+:::
+
+# Part 2: Functions
+
+Functions let you write code once and use it many times with different inputs.
+
+## Basic Function Structure
+
+```{r}
+# Simple function
+calculate_square <- function(x) {
+  result <- x^2
+  return(result)
+}
+
+# Use the function
+calculate_square(5)
+calculate_square(10)
+```
+
+## Functions with Multiple Arguments
+
+```{r}
+# Function with multiple inputs and a default value
+power_function <- function(x, power = 2) {
+  result <- x^power
+  return(result)
+}
+
+# Use default power (2)
+power_function(5)
+
+# Specify different power
+power_function(5, power = 3)
+```
+
+## Functions with If-Else Logic
+
+```{r}
+# Function with conditional logic
+describe_number <- function(x) {
+  if (x < 0) {
+    return("negative")
+  } else if (x == 0) {
+    return("zero")
+  } else {
+    return("positive")
+  }
+}
+
+describe_number(-5)
+describe_number(0)
+describe_number(10)
+```
+
+::: {.task-box}
+### 5-Min Classroom Task: Functions {.unlisted .unnumbered}
+
+Write a function called `grade_exam()` that:
+
+1. Takes a numeric grade (0-100) as input
+2. Returns "Excellent" if grade >= 90
+3. Returns "Good" if grade >= 70
+4. Returns "Pass" if grade >= 50
+5. Returns "Fail" otherwise
+
+Test it with grades: 95, 75, 55, 40
+
+```{r, eval=FALSE}
+# Your code here
+grade_exam <- function(grade) {
+  # Fill in the function
+}
+
+# Test it
+grade_exam(95)
+grade_exam(75)
+grade_exam(55)
+grade_exam(40)
+```
+:::
+
+# Part 3: Automating Machine Learning Tasks
+
+Now let's see how automation helps with machine learning workflows.
+
+## Preparing Data for ML
+
+```{r}
+# Prepare clean dataset
+data_ml <- data %>%
+  select(risk_affine, female, statistiknote_w1, fachsemester, 
+         erstfach_name, alkohol) %>%
+  drop_na() %>%
+  mutate_at(c("female", "risk_affine", "alkohol", "erstfach_name"), as.factor)
+
+# Check dimensions
+dim(data_ml)
+```
+
+## Why Automate in Machine Learning?
+
+In ML, you often need to test many different approaches:
+
+- **Different parameter values**: What's the best mtry? The best number of trees?
+- **Different sample sizes**: Does more training data always help?
+- **Different pre-processing**: Should we restrict the age range? Remove outliers?
+
+Testing these manually would mean copy-pasting code dozens of times. **Automation lets you test systematically and compare results easily.**
+
+## Example 1: Testing Different Parameters
+
+Let's say you want to test different `mtry` values (how many variables to consider at each split):
+
+```{r}
+# Set up - do this ONCE before the loop
+set.seed(123)
+trainIndex <- createDataPartition(data_ml$risk_affine, p = 0.7, list = FALSE)
+trainData <- data_ml[trainIndex, ]
+testData <- data_ml[-trainIndex, ]
+
+# Define mtry values to test
+mtry_values <- c(2, 3, 4, 5)
+
+# Store results
+results <- data.frame(mtry = numeric(), accuracy = numeric())
+
+# Loop through different mtry values
+for (m in mtry_values) {
+  # Train model with different mtry
+  model <- ranger(
+    risk_affine ~ female + statistiknote_w1 + fachsemester + erstfach_name + alkohol,
+    data = trainData,
+    num.trees = 150,
+    mtry = m,
+    probability = TRUE
+  )
+  
+  # Predict on test set
+  predictions <- predict(model, data = testData)
+  pred_class <- ifelse(predictions$predictions[, "1"] > 0.5, "1", "0")
+  pred_class <- factor(pred_class, levels = levels(testData$risk_affine))
+  
+  # Calculate accuracy
+  accuracy <- mean(pred_class == testData$risk_affine)
+  
+  # Store result
+  results <- rbind(results, data.frame(mtry = m, accuracy = accuracy))
+  
+  print(paste("mtry =", m, "| Accuracy =", round(accuracy, 3)))
+}
+
+# View all results
+results
+```
+
+**Key insight:** We split the data once, then test different mtry values on the same split. This lets us see which mtry works best for this particular train/test combination.
+
+## Example 2: Nested Loops for Multiple Parameters
+
+What if you want to test **both** training size AND mtry? Use nested loops:
+
+```{r}
+# What to test
+train_sizes <- c(0.5, 0.7, 0.9)
+mtry_values <- c(2, 3, 4)
+
+# Store results
+tuning_results <- data.frame(train_size = numeric(), mtry = numeric(), accuracy = numeric())
+
+# Outer loop: training sizes
+for (train_prop in train_sizes) {
+  
+  # Create train/test split for this training size
+  set.seed(123)
+  trainIndex <- createDataPartition(data_ml$risk_affine, p = train_prop, list = FALSE)
+  trainData <- data_ml[trainIndex, ]
+  testData <- data_ml[-trainIndex, ]
+  
+  # Inner loop: mtry values
+  for (m in mtry_values) {
+    
+    # Train model with this combination of parameters
+    model <- ranger(
+      risk_affine ~ female + statistiknote_w1 + fachsemester + erstfach_name + alkohol,
+      data = trainData,
+      num.trees = 150,
+      mtry = m,
+      probability = TRUE
+    )
+    
+    # Make predictions on test set
+    predictions <- predict(model, data = testData)
+    pred_class <- ifelse(predictions$predictions[, "1"] > 0.5, "1", "0")
+    pred_class <- factor(pred_class, levels = levels(testData$risk_affine))
+    
+    # Calculate accuracy
+    accuracy <- mean(pred_class == testData$risk_affine)
+    
+    # Store result
+    tuning_results <- rbind(tuning_results, 
+                           data.frame(train_size = train_prop, mtry = m, accuracy = accuracy))
+    
+    # Print progress
+    print(paste("Train size:", train_prop, "| mtry:", m, "| Accuracy:", round(accuracy, 3)))
+  }
+}
+
+# View all results
+tuning_results %>%
+  kbl(digits = 3) %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE)
+
+# Find best combination
+best <- tuning_results[which.max(tuning_results$accuracy), ]
+print(paste("Best: train_size =", best$train_size, "| mtry =", best$mtry, "| Accuracy =", round(best$accuracy, 3)))
+```
+
+**The power of nested loops:** We tested 9 combinations (3 × 3) with just a few lines of code!
+
+## Visualizing Tuning Results
+
+You'll learn to create such nice graphs in the next session! 
+
+```{r}
+# Plot accuracy as lines for each training size
+ggplot(tuning_results, aes(x = mtry, y = accuracy, 
+                           color = as.factor(train_size), 
+                           group = train_size)) +
+  geom_line(linewidth = 1.2) +
+  geom_point(size = 3) +
+  labs(title = "Model Accuracy by Training Size and mtry",
+       x = "mtry (Number of Variables per Split)",
+       y = "Accuracy",
+       color = "Training Size") +
+  theme_minimal() +
+  scale_color_brewer(palette = "Set2")
+```
+
+Now you can easily see which combination works best! You can also vary the number of trees, and basically every parameter you have! 
+
+## Testing Different Pre-Processing Strategies
+
+In practice, you often want to test how robust your model is to different pre-processing decisions. For example:
+
+- What if we remove outliers vs. keep them?
+- What if we restrict the sample to certain age groups?
+- What if we treat missing values differently?
+
+Let's automate testing different pre-processing approaches and see how they affect model performance.
+
+### Example: Testing Different Age Restrictions
+
+Suppose you want to see how your model performs when trained on different age groups:
+
+```{r}
+# First, let's add age back to our data for this example
+data_ml_age <- data %>%
+  select(risk_affine, female, statistiknote_w1, fachsemester, 
+         erstfach_name, alkohol, age) %>%
+  drop_na() %>%
+  mutate_at(c("female", "risk_affine", "alkohol", "erstfach_name"), as.factor)
+
+# Function to test model with different age restrictions
+test_age_restrictions <- function(formula, data, age_ranges, seed = 123) {
+  
+  results <- data.frame(
+    age_restriction = character(),
+    n_observations = numeric(),
+    accuracy = numeric(),
+    stringsAsFactors = FALSE
+  )
+  
+  for (i in 1:nrow(age_ranges)) {
+    # Filter data by age
+    min_age <- age_ranges$min[i]
+    max_age <- age_ranges$max[i]
+    data_filtered <- data %>% filter(age >= min_age & age <= max_age)
+    
+    # Skip if too few observations
+    if (nrow(data_filtered) < 50) {
+      print(paste("Skipping age", min_age, "-", max_age, ": too few observations"))
+      next
+    }
+    
+    # Split and train
+    set.seed(seed)
+    trainIndex <- createDataPartition(data_filtered$risk_affine, 
+                                      p = 0.7, list = FALSE)
+    trainData <- data_filtered[trainIndex, ]
+    testData <- data_filtered[-trainIndex, ]
+    
+    model <- ranger(formula, data = trainData, num.trees = 150,
+                   probability = TRUE, seed = seed)
+    
+    # Predict and evaluate
+    predictions <- predict(model, data = testData)
+    pred_class <- ifelse(predictions$predictions[, "1"] > 0.5, "1", "0")
+    pred_class <- factor(pred_class, levels = levels(testData$risk_affine))
+    accuracy <- mean(pred_class == testData$risk_affine)
+    
+    # Store results
+    results <- rbind(results, 
+                    data.frame(
+                      age_restriction = paste(min_age, "-", max_age),
+                      n_observations = nrow(data_filtered),
+                      accuracy = accuracy
+                    ))
+  }
+  
+  return(results)
+}
+
+## now let's look at our age distribution
+summary(data_ml_age$age)
+
+# Define age ranges to test. In your code, don't hard-code the age ranges! 
+age_ranges <- data.frame(
+  min = c(18, 20),
+  max = c(54, 24)
+)
+
+# Test different age restrictions
+age_results <- test_age_restrictions(
+  formula = risk_affine ~ female + statistiknote_w1 + fachsemester + alkohol,
+  data = data_ml_age,
+  age_ranges = age_ranges
+)
+
+# Display results
+age_results %>%
+  kbl(digits = 3) %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE)
+
+```
+
+This helps us understand if our model works better for certain age groups, or if we should use the full sample.
+
+
+::: {.task-box}
+### 5-Min Classroom Task: Automizing age restrictions {.unlisted .unnumbered}
+
+Use the `test_age_restrictions` function to assess how accurate your model would be for people over 25. Do you need to edit the function itself or just use different input?
+
+```{r, eval=F}
+# Your code here
+
+```
+:::
+
+
+### Motivation: Other Pre-Processing Strategies to Test
+
+You could use the same approach to test:
+
+**Outlier handling:**
+- Keep all data vs. remove outliers (e.g., values beyond 3 standard deviations)
+- Winsorize extreme values vs. remove them
+- Different outlier definitions for different variables
+
+**Sample restrictions:**
+- Only certain majors vs. all majors
+- Only students who work vs. all students
+- First-year students vs. more experienced students
+
+**Missing data strategies:**
+- Different imputation methods (mean, median, mode)
+- Complete case analysis vs. imputation
+- Dropping variables with too many missing values
+
+The key is: **write a function once, test many strategies automatically, and let the data tell you what works best!**
+
+
+# Part 4: Automating Regression Analysis (Optional)
+
+Now let's apply these concepts to real data analysis tasks.
+
+## Manual Approach (Don't Do This!)
+
+Imagine you want to run regressions with three different outcome variables:
+
+```{r}
+# This is repetitive and error-prone!
+model1 <- lm(statistiknote_w1 ~ risk_affine + female + fachsemester, data = data)
+model2 <- lm(mathenote ~ risk_affine + female + fachsemester, data = data)
+model3 <- lm(abiturnote ~ risk_affine + female + fachsemester, data = data)
+
+summary(model1)
+```
+
+## Better: Use a Loop
+
+```{r}
+# Define outcomes and predictors
+outcomes <- c("statistiknote_w1", "mathenote", "abiturnote")
+predictors <- c("risk_affine", "female", "fachsemester")
+
+# Create empty list for models
+models <- list()
+
+# Loop through outcomes
+for (i in 1:length(outcomes)) {
+  # Create formula
+  formula_text <- paste(outcomes[i], "~", paste(predictors, collapse = " + "))
+  formula_obj <- as.formula(formula_text)
+  
+  # Fit model
+  models[[i]] <- lm(formula_obj, data = data)
+  
+  # Print which model we just fit
+  print(paste("Fitted model for:", outcomes[i]))
+}
+
+# Name the list elements
+names(models) <- outcomes
+
+# Check one model
+summary(models$statistiknote_w1)
+```
+
+## Even Better: Use a Function
+
+```{r}
+# Function to run a regression
+run_regression <- function(outcome_var, predictor_vars, dataset) {
+  # Create formula
+  formula_text <- paste(outcome_var, "~", paste(predictor_vars, collapse = " + "))
+  formula_obj <- as.formula(formula_text)
+  
+  # Fit model
+  model <- lm(formula_obj, data = dataset)
+  
+  return(model)
+}
+
+# Use the function
+model_stats <- run_regression("statistiknote_w1", predictors, data)
+summary(model_stats)
+
+# Use it in a loop for multiple outcomes
+models_func <- list()
+for (outcome in outcomes) {
+  models_func[[outcome]] <- run_regression(outcome, predictors, data)
+}
+```
+
+
+## Creating a Simple Results Table
+
+Now let's extract key coefficients from all models and put them in a table:
+
+```{r}
+# Use broom package to tidy model output
+library(broom)
+
+# Extract coefficients for one model
+tidy(models_func$statistiknote_w1)
+
+# Now do it for all models using a loop
+all_results <- data.frame()
+
+for (outcome in outcomes) {
+  # Get tidy results
+  model_tidy <- tidy(models_func[[outcome]])
+  
+  # Add outcome name
+  model_tidy$outcome <- outcome
+  
+  # Combine with previous results
+  all_results <- rbind(all_results, model_tidy)
+}
+
+# Show results for one coefficient across all models
+all_results %>%
+  filter(term == "risk_affine") %>%
+  select(outcome, estimate, std.error, p.value) %>%
+  kbl(digits = 3) %>%
+  kable_styling(bootstrap_options = "striped", full_width = FALSE)
+```
+
+
+# Part 5: Quick Introduction to `purrr` (Optional)
+
+The `purrr` package provides a faster way to apply functions. It's like `lapply()` but with more consistent syntax. Here's a quick comparison:
+
+```{r}
+# Using a regular loop
+squares_loop <- numeric(5)
+for (i in 1:5) {
+  squares_loop[i] <- i^2
+}
+
+# Using lapply (base R)
+squares_lapply <- lapply(1:5, function(x) x^2)
+squares_lapply <- unlist(squares_lapply)
+
+# Using map from purrr (similar to lapply)
+library(purrr)
+squares_map <- map_dbl(1:5, ~ .x^2)
+
+# All give the same result
+squares_loop
+squares_lapply
+squares_map
+```
+
+`purrr` is useful but not essential - loops and `lapply()` work just fine for most tasks!
+
+# Summary
+
+**What we learned:**
+
+1. **Loops** let you repeat operations without copy-pasting code
+   - Use `for` loops to iterate over sequences
+   - Store results in vectors or lists
+   
+2. **Functions** make your code reusable
+   - Write once, use many times with different inputs
+   - Include if-else logic for flexibility
+   - Add default values for common parameters
+
+3. **Automation in practice:**
+   - Run multiple regressions automatically
+   - Create formatted results tables
+   - Test different model parameters systematically
+   - Compare pre-processing strategies
+   
+4. **`purrr`** is a faster alternative to loops
+   - Similar to base R's `lapply()`
+   - More consistent syntax
+   - Optional - loops work fine!
+
+**Key principle:** If you're copying and pasting code with small changes, you should write a function or loop instead!
+
+# Sources {.unlisted .unnumbered}
+
+- Wickham, H., & Grolemund, G. (2017). *R for Data Science: Import, Tidy, Transform, Visualize, and Model Data*. O'Reilly Media.
+
+- Kuhn, M. (2008). Building predictive models in R using the caret package. *Journal of Statistical Software*, 28(5), 1-26.
+
+- Wright, M. N., & Ziegler, A. (2017). ranger: A fast implementation of random forests for high dimensional data in C++ and R. *Journal of Statistical Software*, 77(1), 1-17.
+
+- Wickham, H. (2019). *Advanced R* (2nd ed.). Chapman and Hall/CRC.
+
+&nbsp;
+\

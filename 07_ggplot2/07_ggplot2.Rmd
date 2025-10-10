@@ -1,0 +1,779 @@
+---
+title: "Applied Econometrics and Data Science with R - ggplot2"
+author: "Felix Degenhardt & Sophie Wagner"
+date: "`r Sys.Date()`"
+output:
+  html_document:
+    theme: flatly
+    highlight: tango
+    toc: true
+    toc_float: true
+    df_print: paged
+---
+
+# Introduction to ggplot2
+
+`ggplot2` is an R package for producing visualizations of data. Unlike many graphics packages, ggplot2 uses a conceptual framework which allows you to create a graph from composable elements, instead of being limited to a predefined set of charts. There are many great resources online (for example [The R Graphics Cookbook](https://r-graphics.org), [R for Data Science](https://r4ds.hadley.nz/data-visualize), or [R Cheat Sheet](https://www.maths.usyd.edu.au/u/UG/SM/STAT3022/r/current/Misc/data-visualization-2.1.pdf)). 
+
+The goal of this session is to familiarize with the basic concepts and graphs. We are going to use the Student Survey Data to create example graphs and produce some ggplot2 code that you can build up on for your own assignments.
+
+If you later want to go further into this topic and you are looking for innovation, look at the rich list of ggplot2 extensions (it is worth it). A community-kept list can be found [here](https://exts.ggplot2.tidyverse.org/gallery/). We will use the following extensions today: `ggthemes`, `ggpubr`, `ggpie`, `treemapify`, and `waffle`. 
+
+```{r, warning=FALSE}
+#install.packages(ggplot2)
+library(tidyr)
+library(ggplot2)
+library(tidyverse)
+```
+
+
+```{r name2}
+data <- read.csv("../00_data/survey/survey_processed.csv") # Read in student survey
+
+# Drop all rows with missing observations in geschlecht, einkommen, 
+# fleisch or wegdauer
+data <- data %>% 
+  drop_na(einkommen, fleisch, wegdauer) %>%
+  mutate(organ_donor = as.factor(organ_donor),
+         female = as.factor(female))
+```
+
+
+# ggplot2 components
+A ggplot graph consists of mutliple components. By layering these components, users can create customized visualizations.
+
+![Source: https://metricsf20.classes.ryansafner.com/slides/1.3-slides#1](figures/gglayers.png)
+
+
+
+<body>
+  <h3></h3>
+    <ul>
+      <li>**Data** - to be drawn from </li>
+      <li>**Aesthetics mapping** - scales onto which data is mapped (x and y axes)</li>
+      <li>**Geometries** - shapes used to represent the data </li>
+      <li>**Scales** - define the range of values</li>
+      <li>**Facets** - define plot into subgroups</li>
+      <li>**Coordinates** - to organize location</li>
+      <li>**Labels** - describe the scale and markings</li>
+      <li>**Theme** - style the plot elements </li>
+    </ul>
+</body>
+
+Out of these components, ggplot2 needs at least the following three to produce a chart: data, a mapping, and a geometry.
+
+
+## Data 
+ggplot2 uses data to construct a plot. The system works best if the data is provided in a tidy format. As the first step in many plots, we pass the data to the `ggplot()` function, which stores the data to be used later by other parts of the plotting system. Using the Student Survey data, we start as follows:
+
+```{r name4}
+ggplot(data = data) # Specifies the data frame 'data' as data source.
+```
+
+
+
+## Aesthetics 
+The aestethics or mapping of a plot is a set of instructions on how parts of the data are mapped onto aesthetic attributes of geometric objects.
+A mapping can be made by using the `aes()` function to make pairs of graphical attributes. If we want the `einkommen` and `wegdauer` columns to map to the x- and y-coordinates in the plot, we can do that as follows:
+
+```{r name6}
+# Specifies which variables should be mapped.
+ggplot(data, aes(x = einkommen, y = wegdauer)) 
+```
+
+
+## Geometries
+
+The heart of any graphic is the geometry component. It takes the mapped data and displays it in some way we understand as a representation of the data. The geometry you choose depends on what you want to show:
+
+![Source: https://metricsf20.classes.ryansafner.com/slides/1.3-slides#1](figures/geom_demo.png)
+
+There are **many** more options. Check out this [link](https://ggplot2.tidyverse.org/reference/) for a more complete list.
+
+### Point plot {.unlisted .unnumbered}
+Point plots are a versatile and effective tool for visualizing relationships between two continuous variables. They are particularly useful for identifying trends, clusters, and outliers in data.
+
+```{r}
+# Creates a basic point plot.
+ggplot(data, aes(x = einkommen, y = paar_schuhe))+
+  geom_point()
+```
+
+
+```{r}
+# Creates a basic point plot and add a line layer.
+ggplot(data, aes(x = einkommen, y = paar_schuhe))+
+  geom_point()+
+  geom_line(colour = "blue", alpha = 0.3)
+```
+
+
+```{r}
+# Creates a point plot that uses two different colors for males and females.
+ggplot(data, aes(x = einkommen, y = paar_schuhe))+ 
+  geom_point(aes(color = female))
+```
+
+```{r, message= F}
+# Adds a fitted line for the relationship between x and y.
+ggplot(data, aes(x = einkommen, y = paar_schuhe))+
+  geom_point(aes(colour = female))+
+  geom_smooth(method = "lm", se = TRUE)+
+geom_smooth(method = "lm", se = TRUE, aes(color = female))
+```
+
+Geometries can have their own data, their own aesthetics, some create summary statistics of the data (e.g. histograms).
+
+### ggplot2 and the tidyverse {.unlisted .unnumbered}
+
+We can also use the piping operator `%>%` in combination with `ggplot` grahps!
+
+```{r}
+data %>% 
+  ggplot(aes(x = age, y = einkommen, color = erstfach_name))+
+  geom_point()
+```
+
+
+
+
+### Boxplot {.unlisted .unnumbered}
+Box plots are an essential tool for visualizing the distribution of a continuous variable. They provide a clear summary of data by displaying key statistics, such as the median, quartiles, and potential outliers.
+
+```{r}
+# Creates a basic boxplot for wegdauer.
+data %>% 
+  ggplot(aes(x =einkommen))+
+    geom_boxplot()
+```
+
+
+```{r}
+# Creates a basic boxplot for einkommen by gender.
+data %>% 
+  ggplot(aes(x =female, y = einkommen))+
+    geom_boxplot()+
+    geom_point(aes(size = fachsemester, shape = organ_donor), alpha = 0.2)
+```
+
+###  Bar plot {.unlisted .unnumbered}
+Bar plots are an excellent tool for visualizing the distribution of categorical data or comparing values across different categories. They represent data with rectangular bars, where the height (or length) of each bar corresponds to the frequency or value of a category.
+```{r}
+# Creates a basic barplot for organ_donor.
+data %>% 
+  filter(!is.na(organ_donor)) %>%
+  ggplot(aes(x = organ_donor))+
+    geom_bar()
+```
+
+
+```{r}
+# Adds different colors for males and females and adds a legend on the side.
+data %>% 
+  ggplot(aes(x = organ_donor, fill = female))+
+    geom_bar()
+```
+
+
+```{r}
+# PLots the bars side-by-side.
+data %>% 
+  ggplot(aes(x = organ_donor, fill = female))+
+    geom_bar(position = "dodge")
+```
+
+
+### Saving {.unlisted .unnumbered}
+Saving a ggplot as an R object. 
+
+```{r, message = F}
+# Saves the point plot as an R object under the name 'p'.
+p <- data %>% 
+      ggplot(aes(x = einkommen, y = wegdauer))+
+      geom_point(aes(color = organ_donor))+
+      geom_smooth(method = "lm")
+p
+```
+
+
+
+
+Saving a ggplot to a jpeg or png format.
+```{r, message = F}
+# Uses the png function to save the plot under the specified path. 
+# Note that it is important to use 'print(p)' before saving it, 
+# otherwise the plot will be empty. 
+# Using a predefined size for the plot, insures that the size doesn't change 
+# between session. 
+
+p <- data %>% 
+        ggplot(aes(x = einkommen, y = wegdauer))+
+        geom_point(aes(color = organ_donor))+
+        geom_smooth(method = "lm")
+
+
+png("results/fig_einkommen_wegdauer.png",width = 801, height = 456)
+print(p)
+dev.off()
+```
+
+
+## Facets 
+Facets can be used to separate small multiples, or different subsets of the data. It is a powerful tool to quickly split up the data into smaller panels, based on one or more variables, to display patterns or trends (or the lack thereof) within the subsets.
+```{r, message = F}
+p <- data %>% 
+        ggplot(aes(x = einkommen, y = wegdauer))+
+        geom_point(aes(color = organ_donor))+
+        geom_smooth(method = "lm")
+
+# Divides the plot into two parts for female and males, 
+p <- p + facet_wrap(~female)
+p
+```
+
+
+```{r, message = F}
+# Additionally, splits the plot into a grid of panels based on the sidejob 
+# (whether individuals have a side job) and male (gender) variables, 
+# creating a separate plot for each combination of these variables.
+g <- data %>% 
+      ggplot(aes(x = einkommen, y = wegdauer))+
+      geom_point(aes(color = organ_donor))+
+      geom_smooth(method = "lm")+
+      facet_grid(sidejob~female)
+g
+```
+
+Since we can't distinguish between the subgroups anymore, we should relabel the facets to make names more clear. 
+
+```{r, message = F}
+female.labs <- c("Female", "Male")
+names(female.labs) <- c("1", "0")
+
+sidejob.labs <- c("Side job", "No side job")
+names(sidejob.labs) <- c("1", "0")
+
+
+g <- data %>% 
+      ggplot(aes(x = einkommen, y = wegdauer))+
+      geom_point(aes(color = organ_donor))+
+      geom_smooth(method = "lm")+
+      facet_grid(sidejob~female, 
+             labeller = labeller(female = female.labs, 
+                                 sidejob = sidejob.labs))
+g
+```
+
+
+## Coordinates 
+You can view the coordinates part of the plot as an interpreter of position aesthetics. While typically Cartesian coordinates are used, the coordinate system powers the display of map projections and polar plots.
+
+```{r}
+# Flips the bar plot sideways
+data %>% 
+  ggplot(aes(x = organ_donor, fill = female))+
+  geom_bar()+
+  coord_flip()
+```
+
+
+## Labels
+
+```{r}
+p <- data %>% 
+        ggplot(aes(x = einkommen, y = wegdauer))+
+        geom_point(aes(color = organ_donor))+
+        geom_smooth(method = "lm")+
+        facet_wrap(~female)
+p
+```
+
+
+```{r}
+# Edits the title, axis titles, etc. 
+p <- p + labs(x = "Monthly income",
+       y = "Commuting distance (min.)",
+       title = "Commute by income and gender",
+       subtitle = " ",
+       caption = "Source: Student survey 2023 and 2024",
+       color = "Organ donor")
+p
+```
+
+
+
+## Scales
+Scales are important for translating what is shown on the graph back to an understanding of the data. The scales typically form pairs with aesthetic attributes of the plots, and are represented in plots by guides, like axes or legends. Scales are responsible for updating the limits of a plot, setting the breaks, formatting the labels, and possibly applying a transformation.
+
+Very nice package for a wide arrange of color palettes: `RColorbrewer`.
+
+```{r}
+library(RColorBrewer)
+```
+
+
+```{r}
+display.brewer.all() # Prints all the standard color palettes
+```
+
+```{r, message = F}
+# Adds specifies the Set1 color palette from RColorBrewer to define the 
+# colors for the organ_donor variable.
+p <- data %>% 
+      ggplot(aes(x = einkommen, y = wegdauer))+
+      geom_point(aes(color = organ_donor))+
+      geom_smooth(method = "lm")+
+      facet_grid(sidejob~female)+
+      labs(x = "Monthly income",
+          y = "Commuting distance (min.)",
+          title = "Commuting distance and monthly income by gender",
+          subtitle = " ",
+          caption = "Source: Student survey 2023 and 2024",
+          color = "Organ donor")+
+      scale_colour_brewer(palette = "Set1") 
+      
+p
+```
+
+
+All colors have a specific id. In case you want to manually define your color palette, you can specify the colors like this. 
+
+```{r, message = F}
+# Defines a vector, containing the color ids.
+cols <- c("#7570b3","#66a61e") 
+
+# Creates a plot using the predefined colors.
+p <- data %>% 
+      ggplot(aes(x = einkommen, y = wegdauer))+
+      geom_point(aes(color = organ_donor))+
+      geom_smooth(method = "lm")+
+      facet_grid(sidejob~female)+
+      labs(x = "Monthly income",
+          y = "Commuting distance (min.)",
+          title = "Commuting distance and monthly income by gender",
+          subtitle = " ",
+          caption = "Source: Student survey 2023 and 2024",
+          color = "Organ donor")+
+      scale_colour_manual(values = cols, 
+                          labels = c("1" = "Organ donor","0" = " No organ donor", "NA" = "Not stated"), 
+                          name = " ")
+  
+p
+```
+
+
+A great website to browse for colors and color palettes: [link](https://colorbrewer2.org/#type=qualitative&scheme=Dark2&n=6). 
+
+
+```{r, message = F}
+# Defines a vector, containing the color ids.
+cols <- c("#7570b3","#66a61e") 
+
+# Creates a plot using the predefined colors.
+p <- data %>% 
+      ggplot(aes(x = einkommen, y = wegdauer))+
+      geom_point(aes(color = organ_donor))+
+      geom_smooth(method = "lm")+
+      facet_grid(sidejob~female)+
+      labs(x = "Monthly income",
+          y = "Commuting distance (min.)",
+          title = "Commuting distance and monthly income by gender",
+          subtitle = " ",
+          caption = "Source: Student survey 2023 and 2024",
+          color = "Organ donor")+
+      scale_colour_manual(values = cols, labels = c("No organ donor", "Organ donor", "Not stated"),
+                          name = " ")+
+      scale_x_continuous(limits = c(0,2000), breaks = c(0,250, 500, 750, 2000))
+p
+```
+
+## Themes 
+
+The theme system controls almost any visuals of the plot that are not controlled by the data. You can use the theme for customizations ranging from changing the location of the legends to setting the background color of the plot. 
+
+![Source: https://uw-madison-datascience.github.io/2019-09-11-uwmadison-dc/slides/ggplot2/ggplot2.html#1](figures/visualization-themes.png)
+
+```{r, message = F}
+# Play around with the themes and see how the appearence changes.
+p <- data %>% 
+      ggplot(aes(x = einkommen, y = wegdauer))+
+      geom_point(aes(color = organ_donor))+
+      geom_smooth(method = "lm")+
+      facet_grid(sidejob~female)+
+      labs(x = "Monthly income",
+          y = "Commuting distance (min.)",
+          title = "Commuting distance and monthly income by gender",
+          subtitle = " ",
+          caption = "Source: Student survey 2023 and 2024",
+          color = "Organ donor")+
+      theme_bw()
+      #theme_gray()
+      #theme_minimal()
+      #theme_light()
+p
+```
+
+
+If you want some more cool themes, install the **ggthemes** package.
+
+```{r}
+#install.packages("ggthemes")
+library(ggthemes)
+```
+
+
+```{r, message = F}
+# Try out different themes from the ggthemes package. 
+p <- data %>% 
+      ggplot(aes(x = einkommen, y = wegdauer))+
+      geom_point(aes(color = organ_donor))+
+      geom_smooth(method = lm)+
+      facet_grid(sidejob~female)+
+      labs(x = "Monthly income",
+          y = "Commuting distance (min.)",
+          title = "Commuting distance and monthly income by gender",
+          subtitle = " ",
+          caption = "Source: Student survey 2023 and 2024",
+          color = "Organ donor")+
+    #theme_economist()
+    theme_fivethirtyeight()
+p
+```
+
+The `theme()`function is very important. It enables you to customize all text elements: sizes and fonts of axis labels, axis ticks, legend title, legend labels, etc. and the position of legends. We see an extensive example below. Please play around with the code and the values to see the changes in the plot. 
+
+
+```{r, message = F}
+# The theme() function: Customizes various visual aspects:
+# - axis.text: Sets axis text color (#1f78b4) and size (10).
+# - axis.title.y/x: Sets axis title sizes to 14.
+# - legend.position = "bottom": Places the legend at the bottom of the plot.
+# - legend.box.background: Adds a background box around the legend.
+# - legend.text: Sets legend text size (12) and color ("black").
+# - legend.title: Makes legend title bold and sets size (12).
+# - strip.text.x/y: Customizes facet strip text (size 12, black color, bold).
+# - strip.background: Sets background of facet strips to a solid light blue 
+# (#a6cee3) with a black border.
+
+# Play around with the settings in theme() to see what it does.
+p <- data %>% 
+      ggplot(aes(x = einkommen, y = wegdauer))+
+      geom_point(aes(color = organ_donor))+
+      geom_smooth(method = "lm")+
+      facet_grid(sidejob~female)+
+      labs(x = "Monthly income",
+          y = "Commuting distance (min.)",
+          title = "Commuting distance and monthly income by gender",
+          subtitle = " ",
+          caption = "Source: Student survey 2023 and 2024",
+          color = "Organ donor")+
+      scale_colour_manual(values = cols)+
+      theme_minimal()+
+      theme(axis.text = element_text(colour = "#1f78b4", size = 10),
+          axis.title.y = element_text(size = 20),
+          axis.title.x = element_text(size = 14),
+          legend.position="bottom",
+          legend.box.background = element_rect(),
+          legend.text = element_text(size = 12, colour = "black"),
+          legend.title = element_text(face = "bold", size = 12),
+          strip.text.x = element_text(size = 12, color = "black", face = "bold"),
+          strip.text.y = element_text(size = 12, color = "black", face = "bold"),
+          strip.background = element_rect(color="black", fill="#a6cee3", linetype="solid")
+        )
+p
+```
+
+# 10 Min Classroom Task
+![](teamwork.png){width=60px fig-align="center"}
+
+**Task:** 
+
+1. You get a *bad* plot. In pairs, improve it so it communicates honestly and clearly.
+2. Share ideas with the class
+
+```{r, message = F}
+# Creates data frame
+bad_df <- data %>%
+  filter(!is.na(statistiknote_w1), !is.na(erstfach_name)) %>%
+  group_by(erstfach_name) %>%
+  summarise(mean_grade = mean(statistiknote_w1), n = dplyr::n(), .groups = "drop") 
+
+
+# Your task: Work on this plot!
+ggplot(bad_df, aes(x = erstfach_name, y = mean_grade, fill = erstfach_name)) +
+  geom_col(color = "black") +
+  coord_cartesian(ylim = c(2.1, 3.2)) +                
+  scale_fill_manual(values = c(
+    "BWL"   = "#EF4444",
+    "Politik und Wirtschaft"   = "#60A5FA",
+    "VWL"   = "#3B82F6",
+    "Wirtschaftsinformatik"     = "#93C5FD")
+    ) + 
+  labs(
+    title = "Average Exam Grade by Major!",
+    subtitle = "statistiknote_w1",
+    x = "MAJOR (FIRST FIELD!)",
+    y = "EXAM GRADE (?)",
+    caption = " "
+  ) +
+  theme_gray(base_size = 16) +
+  theme(
+    axis.text.x = element_text(angle = 0),
+    legend.position = "right",
+    panel.grid.minor = element_line(color = "grey60")
+  ) +
+  annotate("text", x = 3, y = 3.15, label = "WOW!", color = "red", size = 7)
+```
+
+
+# Different types of plots
+
+There are many other types of plots that might be useful, depending on the application. We will briefly discuss a few more of them in the following. 
+
+## Waffle plots
+Waffle plots are useful for visualizing proportional data in a nice way. They display data as a grid of squares (or other shapes), where each square represents a fixed amount or percentage of the whole. This makes it easy to see the composition of categories within a dataset at a glance.
+```{r}
+library(waffle)
+```
+
+
+
+```{r, message = F}
+# Summarize the data
+data2 <- data %>%
+  group_by(male, organ_donor, erstfach_name) %>% # Groups the data
+  summarize(Freq = n()) %>% # Calculates the frequency of each combination of the grouped variables
+  mutate(erstfach_name = as.factor(erstfach_name)) %>%
+  arrange(erstfach_name) %>%
+  ungroup() # Removes the grouping structure
+
+
+# Prints the summarized data
+print(data2)
+
+```
+
+Here comes the waffle plot.
+
+```{r}
+# Create waffle plot
+data2 %>% 
+  ggplot(aes(values=Freq, fill=erstfach_name))+
+  geom_waffle(
+    n_rows = 20,        # Specifies the number of squares in each row.
+    color = "white",    # Specifies border color.
+    flip = TRUE,        # Defines orientation
+    na.rm=TRUE          # Removes missing values
+  )+
+  facet_grid(~male)+   # Divides the plot by gender (remove to see the change)
+  coord_equal()+ # Ensures that each square has equal height and width
+  theme_minimal()+
+  theme(axis.title.y = element_blank(), # Removes title, axis titles and texts, 
+    axis.text.y = element_blank(),      # and the legend title
+    axis.text.x = element_blank(),
+    axis.ticks = element_blank(),
+    legend.title = element_blank())
+```
+
+## Treemaps
+Treemaps are useful for visualizing hierarchical data and showing proportions within a whole. They represent data as nested rectangles, where the size of each rectangle corresponds to a specific value or proportion, making it easy to compare the relative sizes of categories or subcategories.
+```{r}
+library(treemapify)
+```
+
+
+```{r}
+# Create a frequency table for erstfach
+table <- data %>% 
+          group_by(erstfach_name) %>%
+          filter(!is.na(erstfach_name)) %>%
+          summarize(sum_courses = n()) %>%
+          # Add a column with names we want to use later
+          mutate(fach = c("BWL\n(n = 96)",
+                          "Politik und\nWirtschaft\n(n = 52)",
+                          "VWL\n(n = 25)",
+                          "Wirtschaftsinformatik\n(n = 10)")) 
+
+table 
+```
+
+Here comes the treemap.
+```{r}
+# geom_treemap(): Adds the treemap geometry to visualize the data..
+# geom_treemap_text(...): Adds text labels inside the rectangles.
+# colour = "white": Sets the text color to white.
+# place = "centre": Centers the text within each rectangle.
+# size = 10: Sets the text size to 10.
+# theme(legend.position = "none"): Removes the legend from the plot.
+table %>% 
+  ggplot(aes(area = sum_courses, fill = erstfach_name, label = fach) )+
+  geom_treemap() +
+  geom_treemap_text(colour = "white",
+                    place = "centre",
+                    size = 10) +
+  theme(legend.position = "none")
+```
+
+
+## Donut plots 
+Donut charts are an alternative chart for pie charts, which have a hole in the middle, making them cleaner to read than pie charts. There are ways to do this without an additional package and there are other packages, but this is what we found to be the easiest.
+```{r, message = F, warning= F}
+library(lessR)
+```
+
+
+Here comes the donut plot.
+
+```{r}
+PieChart(partei, # Defines grouping variable
+         data = data, # Defines data 
+         hole = 0.2, # Defines the size of the donut hole
+         main = NULL # Removes title
+         )
+```
+
+## Plot for regression statistics
+The `ggstats` package provides new statistics, new geometries and new positions for ggplot2 and a suite of functions to facilitate the creation of statistical plots.
+
+```{r}
+library(ggstats)
+```
+
+
+```{r}
+# Combines three vectors into a matrix: 'risk_affine', a numeric conversion 
+# of 'statistiknote_w1' (where commas are replaced by periods and 
+# periods are removed), and 'paar_schuhe'.
+reg_data <- data %>% 
+              select(statistiknote_w1, abiturnote, 
+                     uebungen_w1, wegdauer) %>% 
+              drop_na()
+
+```
+
+
+```{r}
+# Runs a linear regression with the expected statistics grade as dependent 
+# and the abiturnote and the expected number of participated tutorials 
+# as independent variable.
+mod1 <- lm(statistiknote_w1 ~ abiturnote + uebungen_w1, data = reg_data)
+summary(mod1) # Standard summary of the regression output. 
+ggcoef_model(mod1) # Creates coefficient plot.
+```
+
+
+## Correlation plot
+Sometimes it is nice to visualize correlation matrices. Here we run a small toy example, but is especially helpful if there are many continous variables in the data set.
+
+```{r}
+library(ggcorrplot)
+```
+
+
+We use the dataset from the example before.
+
+```{r}
+corr<-cor(reg_data, use = "complete.obs")
+print(corr)
+```
+
+```{r}
+ggcorrplot(corr)
+```
+
+## One plot from many plots
+Sometimes, we want to combine multiple plots into one larger plot. We use the previous examples, start by giving all the plots a name and then combining them into one large plot.
+
+```{r}
+library(ggpubr)
+```
+
+```{r}
+# Recreating the previous plots.
+# Plot 1
+p1 <- data2 %>%
+        ggplot(aes(values=Freq, fill=erstfach_name))+
+        geom_waffle(
+          n_rows = 10,        # Specifies the number of squares in each row.
+          color = "white",    # Specifies border color.
+          flip = TRUE,        # Defines orientation
+          na.rm=TRUE          # Removes missing values
+        )+
+        facet_grid(~male)+   # Divides the plot by gender (remove to see the change)
+        coord_equal()+
+        theme_minimal()+
+        theme(axis.title.y = element_blank(), # Removes title, axis titles and texts, 
+              axis.text.y = element_blank(),      # and the legend title
+              axis.text.x = element_blank(),
+              axis.ticks = element_blank(),
+              legend.title = element_blank())
+
+# Plot 2
+p2 <- ggcoef_model(mod1) 
+
+# Plot 3
+p3 <- ggcorrplot(corr)
+```
+
+Now lets arrange them together. 
+
+```{r}
+ggarrange(p1,p2,p3,
+          ncol = 2, # Defines number of columns
+          nrow = 2  # Defines number of rows
+          )
+```
+
+
+FYI: If you want to combine multiple plots with the same legend, you can also specify that you want to only display one of them. 
+
+
+There are SO many more possibilities to create graphs. Just find them online and try them out! You can create [animated graphs](https://r-graph-gallery.com/animation.html) -- [here](https://fedetiberti.com/post/animated-plots-gganimate/) is a good example for an animated economic graph , [interactive graphs](https://r-graph-gallery.com/interactive-charts.html), [3D graphs](https://r-graph-gallery.com/3d.html) and many more.
+
+# Mistakes when plotting data
+Our last section will be a very quick checklist on what to avoid when plotting data.
+
+## 1. Keep the visualization simple {.unlisted .unnumbered}
+
+Good visualization simply messages and make the main data of interest as easily understandable as possible. Try to avoid wild colors, strange scales, or unnecessary information. 
+
+![Source: https://www.oldstreetsolutions.com/good-and-bad-data-visualization](figures/confusing.png)
+
+## 2. Pay attention to the colors {.unlisted .unnumbered}
+
+Do you want to highlight a contrast or show a continuous evolution. Be aware of the associations to colors (blue -- cold, red -- warm, etc.).
+
+![Source: https://www.oldstreetsolutions.com/good-and-bad-data-visualization](figures/colors.png)
+
+## 3. Question the purpose of your visualization {.unlisted .unnumbered}
+
+## 4. Interpretability {.unlisted .unnumbered}
+
+Maybe show the graph to someone not too familiar with the data to find out if the graph is self-explanatory.
+
+## 5. Avoid misleading scales {.unlisted .unnumbered}
+
+![Source: https://www.oldstreetsolutions.com/good-and-bad-data-visualization](figures/scale.png)
+
+## 6. Don't intentionally misrepresent data {.unlisted .unnumbered}
+
+This should be a no-brainer, however it is important to mention.
+
+![Source: https://www.dailyrecord.co.uk/news/politics/bombshell-brexit-poll-shows-theresa-13184040](figures/brexit.png)
+
+# Sources {.unlisted .unnumbered}
+
+- Introduction to ggplot2. Retrieved October 9, 2024, from https://ggplot2.tidyverse.org/articles/ggplot2.html.
+- An Introduction to `ggplot2` · UC Business Analytics R Programming Guide. (Boehmke, B.). https://uc-r.github.io/ggplot_intro.
+- Chang, W. (2024, April 7). R Graphics Cookbook, 2nd edition. https://r-graphics.org/
+- Grolemund, G., & Wickham, H. (2017). R for Data Science. O’Reilly Media.
+- Arnold J (2024). ggthemes: Extra Themes, Scales and Geoms for 'ggplot2'. R package version 5.1.0.9000, https://github.com/jrnold/ggthemes, http://jrnold.github.io/ggthemes/, https://jrnold.github.io/ggthemes/.
+- Wickham H (2016). ggplot2: Elegant Graphics for Data Analysis. Springer-Verlag New York. ISBN 978-3-319-24277-4, https://ggplot2.tidyverse.org.
+- Kassambara A (2023). ggpubr: 'ggplot2' Based Publication Ready Plots. R package version 0.6.0, https://rpkgs.datanovia.com/ggpubr/.
+- Song Y (2022). ggpie: Create Pie, Donut and Rose Pie Plot with 'ggplot2'.. R package version 0.2.2, https://CRAN.R-project.org/package=ggpie.
+- Hrbrmstr. (Rudis, B.). GitHub - hrbrmstr/waffle: :maple_leaf: Make waffle (square pie) charts in R. GitHub. https://github.com/hrbrmstr/waffle
+
+
+&nbsp;
+\
+
