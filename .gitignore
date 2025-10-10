@@ -1,7 +1,13 @@
 #### course-specific
-
+# data and tasks
 00_data/
 00_tasks/
+
+# all kinds of csv-file, just to be sure
+*.csv
+*.dta
+
+
 
 # History files
 .Rhistory
@@ -52,3 +58,6 @@ po/*~
 
 # RStudio Connect folder
 rsconnect/
+
+# Mac-specific
+.DS_Store
