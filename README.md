@@ -11,7 +11,7 @@ Welcome to the course Applied Econometrics and Data Science with R! We’re exci
 * **Make and explain data decisions:** Explain your choices when processing data and compare different methods (including basic machine learning tools) using objective measures.
 
 ## Course design and prerequisites
-The course consists of two main elements: Introduction to working with R and introduction to Machine learning. We will cover both topics in a very hands-on way, by giving you a basic understanding and then applying the concepts in class. We thus ask you to participate in class and work on your projects during the semester.
+The course consists of two main elements: Introduction to working with R and introduction to Machine Learning. We will cover both topics in a very hands-on way, by giving you a basic understanding and then applying the concepts in class. We thus ask you to participate in class and work on your projects during the semester.
 
 To start smoothly and solve potential technical problems early, please make sure to **install all required software before the first session**.
 
@@ -34,6 +34,6 @@ Please bring your laptop to the seminars and have a look at the content before e
 
 ## Instructors 
 
-* Felix Degenhardt (email)
-* Sophie Wagner (email)
+* Felix Degenhardt (felix.degenhardt@uni-potsdam.de)
+* Sophie Wagner (sophie.wagner@uni-potsdam.de)
 
