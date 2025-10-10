@@ -6,6 +6,7 @@
 # all kinds of csv-file, just to be sure
 *.csv
 *.dta
+*.txt
 
 
 
