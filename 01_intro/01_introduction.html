@@ -11,7 +11,7 @@
 
 <meta name="author" content="Felix Degenhardt &amp; Sophie Wagner" />
 
-<meta name="date" content="2025-10-10" />
+<meta name="date" content="2025-10-13" />
 
 <title>Applied Econometrics and Data Science with R - Introduction to R</title>
 
@@ -2843,7 +2843,7 @@ border-radius: 0px;
 <h1 class="title toc-ignore">Applied Econometrics and Data Science with
 R - Introduction to R</h1>
 <h4 class="author">Felix Degenhardt &amp; Sophie Wagner</h4>
-<h4 class="date">2025-10-10</h4>
+<h4 class="date">2025-10-13</h4>
 
 </div>
 
@@ -3024,7 +3024,7 @@ you want to write files in R.</p>
 <p>Insert your folder path between the <code>&quot;&quot;</code>. To check what is
 the current working directory:</p>
 <div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="fu">getwd</span>() <span class="co"># current working directory</span></span></code></pre></div>
-<pre><code>## [1] &quot;/Users/sophiewagner/Dropbox/Econ_R/2025/01_intro&quot;</code></pre>
+<pre><code>## [1] &quot;/Users/sophiewagner/Dropbox/Github/Applied_Econometrics_and_Data_Science_with_R/Applied_Econometrics_and_Data_Science_with_R/01_intro&quot;</code></pre>
 <p>The easiest way, is to set up a coherent folder structure and refer
 to <em>relative</em> paths (compared to absolute paths). For example,
 whenever you <code>knit</code> and R-Markdown document, the default
@@ -3444,7 +3444,7 @@ frame mydata and name it <code>risk_affine</code>.</p>
 <span id="cb87-3"><a href="#cb87-3" tabindex="-1"></a><span class="co"># greater than the mean &#39;risiko&#39; (calculated while ignoring missing values). </span></span>
 <span id="cb87-4"><a href="#cb87-4" tabindex="-1"></a><span class="co"># The result is 1 if risiko is above the mean, and 0 otherwise.</span></span>
 <span id="cb87-5"><a href="#cb87-5" tabindex="-1"></a>mydata<span class="sc">$</span>risk_affine <span class="ot">&lt;-</span><span class="fu">as.numeric</span>(mydata<span class="sc">$</span>risiko<span class="sc">&gt;</span><span class="fu">mean</span>(mydata<span class="sc">$</span>risiko, <span class="at">na.rm =</span> <span class="cn">TRUE</span>)) </span></code></pre></div>
-<p>We can create a frequency table.</p>
+<p>We can create a frequency table like this:</p>
 <div class="sourceCode" id="cb88"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb88-1"><a href="#cb88-1" tabindex="-1"></a><span class="fu">table</span>(mydata<span class="sc">$</span>risk_affine) <span class="co"># Displays a frequency table for the new variable.</span></span></code></pre></div>
 <pre><code>## 
 ##   0   1 
