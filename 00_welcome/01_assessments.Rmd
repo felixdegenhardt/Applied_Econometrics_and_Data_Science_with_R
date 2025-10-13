@@ -64,7 +64,7 @@ This is the main deliverable of the course. Your R Markdown document should be f
    * Plausible sample restrictions \& handling of missing data and outliers.
    * Use of suitable models and methods.
    * Results clearly linked back to the research question.
-   * ***Master students:*** Include advanced tuning and evaluation of models and comparison of at least two different modeling approaches with justification for final choice.
+   * ***Master students:*** Include advanced tuning and evaluation of models and comparison of at least two different modeling approaches with justification for final choice. Specifically, evaluate the models based on metrics discussed in the course and potential drawbacks of the model of choice.
 
 * **Data Visualization and Interpretation (20%)**
    * Use of clear, accurate, and professional visualizations (tables and graphs).
