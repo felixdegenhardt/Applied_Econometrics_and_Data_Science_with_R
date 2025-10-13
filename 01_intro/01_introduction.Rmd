@@ -442,7 +442,7 @@ It might be useful to create another variable with the data we have. Here is an 
 mydata$risk_affine <-as.numeric(mydata$risiko>mean(mydata$risiko, na.rm = TRUE)) 
 ```
 
-We can create a frequency table.
+We can create a frequency table like this:
 ```{r}
 table(mydata$risk_affine) # Displays a frequency table for the new variable.
 ```
