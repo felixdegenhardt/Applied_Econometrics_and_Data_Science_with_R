@@ -378,11 +378,11 @@ tuning_grid <- expand.grid(
 
 
 for(i in seq_len(nrow(tuning_grid))) { # Iterates over each row of the tuning_grid.
-  
   # Fits a random forest model with the current number of trees specified by 
   # tuning_grid$trees[i], and mtry set to the square root of 5. 
   # verbose = FALSE suppresses detailed output, and 
   # seed = 123 ensures reproducibility.
+  
   fit <- ranger(
   formula    = risk_affine ~ female + statistiknote_w1 + fachsemester + 
                              erstfach_name + alkohol, 
@@ -392,13 +392,14 @@ for(i in seq_len(nrow(tuning_grid))) { # Iterates over each row of the tuning_gr
   verbose    = FALSE,
   seed       = 123
   )
+  
   # Stores the RMSE of the model in the rmse column of tuning_grid for the 
   # corresponding number of trees. The RMSE is calculated as the square root 
   # of the fit$prediction.error.
   tuning_grid$rmse[i] <- sqrt(fit$prediction.error)
- 
-  
 }
+
+tuning_grid
 ```
 
 
@@ -411,9 +412,9 @@ ggplot(tuning_grid, aes(trees, rmse)) +
   geom_line()
 ```
 
-We don't see a very clear pattern, but after about 150 trees, the prediction error does not change much anymore. Notice, that the value range on the y-axis is very narrow.
+We don't see a very clear pattern, but after about 20 trees, the prediction error does not change much anymore. Notice, that the value range on the y-axis is very narrow.
 
-Now, we select a sufficient number of tree and assume `ntree`$=150$ is fixed. Using again the cross-validation approach included in the `caret` package, we tune the remaining parameter `mtry` and `min.node.size`. 
+Now, we select a sufficient number of tree and assume `ntree`$=20$ is fixed. Using again the cross-validation approach included in the `caret` package, we tune the remaining parameter `mtry` and `min.node.size`. 
 
 
 ```{r}
@@ -425,7 +426,7 @@ We specify the values to be considered and also define the `splitrule`, as this 
 
 ```{r}
 tune_grid <- expand.grid(
-  mtry = seq(2,4,0.05),  # Number of variables randomly sampled at each split
+  mtry = seq(2,5,1),  # Number of variables randomly sampled at each split
   splitrule = "gini", # Number of trees in the forest
   min.node.size = c(1, 5, 10) # Minimum size of terminal nodes
 )
@@ -627,11 +628,35 @@ Task: train a random forest using **statistiknote_w1** as the outcome and **fema
 
 ```{r,message = F}
 
-library(ranger)
-
 #1) Train the RF
+train_control <- trainControl(method = "cv", number = 10)
+
+tune_grid <- expand.grid(
+  mtry = seq(2,5,1),  # Number of variables randomly sampled at each split
+  splitrule = "variance", # Number of trees in the forest
+  min.node.size = c(1, 5, 10) # Minimum size of terminal nodes
+)
+tune_grid
+
+
+rf_model <- train(
+  statistiknote_w1 ~ female + risk_affine + fachsemester + 
+                erstfach_name + alkohol, 
+  data = trainData, 
+  method = "ranger",             
+  trControl = train_control, 
+  tuneGrid = tune_grid, 
+  num.trees = 20                
+)
+
+# Print the best model and results
+print(rf_model)
+
 
 #2) What measure can we use to evaluate the performance?
+rf_prob_pred <- predict(rf_model, data = testData)
+
+RMSE(rf_prob_pred, testData$statistiknote_w1)
 
 ```
 :::
