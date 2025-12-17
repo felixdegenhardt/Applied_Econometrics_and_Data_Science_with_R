@@ -137,8 +137,12 @@ means <- numeric(5)
 sample_sizes <- c(50, 100, 150, 200, 250)
 
 for (i in 1:length(sample_sizes)) {
-  # Fill in the loop
+  data_subset <- data[1:sample_sizes[i],]
+  means[i] <- mean(data_subset$statistiknote_w1, na.rm = T
+                   )
 }
+print(means)
+### do it in list of lists
 ```
 :::
 
@@ -211,12 +215,26 @@ Test it with grades: 95, 75, 55, 40
 ```{r, eval=FALSE}
 # Your code here
 grade_exam <- function(grade) {
-  # Fill in the function
+  if(is.numeric(grade)){
+            # Fill in the function
+            if(grade >= 90){
+                        return("Excellent")
+            } else if(grade >= 70 & grade < 90){
+                        return("Good")
+            } else if(grade >= 50 & grade < 70){
+                        return("Pass")
+            } else{
+                        return("Fail")
+            }
+            
+  } else{
+    return("Only numeric values!")
+  }
 }
 
 # Test it
 grade_exam(95)
-grade_exam(75)
+grade_exam("75")
 grade_exam(55)
 grade_exam(40)
 ```

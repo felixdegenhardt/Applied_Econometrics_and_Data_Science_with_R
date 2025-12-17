@@ -351,7 +351,9 @@ Now join this information to `data_long` so that each course has the tutor's off
 
 ```{r, eval=FALSE}
 # Your code here
-data_with_office #<-
+new_data <- data_long %>% 
+  left_join(tutor_info, by = c("tutor")) 
+
 ```
 What type of join did you use? What happens if you use another one instead? 
 :::
@@ -439,14 +441,21 @@ mydata <- mydata %>%
 
 Using the `mydata` dataset and piping:
 
-1. Create a new variable `high_risk` that equals 1 if `risk_affine` is greater than 5, and 0 otherwise
+1. Create a new variable `high_risk` that equals 1 if `risiko` is greater than 5, and 0 otherwise
 2. Filter to keep only students with `age` between 18 and 30
 3. Group by `female` and calculate the average `high_risk` for each gender
 
 **Hint:** Use `mutate()`, `filter()`, `group_by()`, and `summarize()`
 
 ```{r, eval=FALSE}
-# Your code here
+
+data_summary <- mydata %>% 
+  mutate(high_risk = if_else(risiko > 5, 1, 0)) %>%
+  filter(age >= 18 & age <= 30) %>% 
+  group_by(female) %>%
+  summarise(avg_high_risk = mean(high_risk, na.rm = T))
+  
+data_summary
 
 ```
 :::
