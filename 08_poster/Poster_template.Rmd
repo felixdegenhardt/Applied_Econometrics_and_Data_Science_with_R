@@ -16,7 +16,7 @@ primary_colour: "#00305E"
 secondary_colour: "white"
 accent_colour: "#00305E"
 titlebox_bordercol: "#00305E"
-body_textsize: "38pt"
+body_textsize: "36pt"
 
 output: 
   posterdown::posterdown_html:
@@ -43,7 +43,7 @@ library(tidyverse)
 ### show chunk option
 ## show yaml options link
 
-data <- read.csv("../../00_data/survey/survey_processed.csv") # Read in student survey
+data <- read.csv("../00_data/survey/survey_processed.csv") # Read in student survey
 
 # Drop all rows with missing observations in geschlecht, einkommen, 
 # fleisch or wegdauer
@@ -90,7 +90,7 @@ knitr::kable(data_summary_formatted, caption = 'Table caption.',align = 'c',"htm
 
 # Methods (if needed)
 
-As you see in the Rmd Document, you can create headers in the same way as in other markdown files, by using the hashtag. The color of the headers, the font size, and a lot of other settings like the number of columns can be adjusted in the header of the Rmd file. We implicitly used it before to create date and title of the session.
+As you see in the Rmd Document, you can create headers in the same way as in other markdown files, by using the hashtag. The color of the headers, the font size, and a lot of other settings like the number of columns can be adjusted in the header of the Rmd file. We implicitly used it before to create date and title of the session. If you don't want to create your outputs within this script but rather export it in another script and import it here, you also have the option to read in graphs/tables here:
 
 ```{r, echo=FALSE, out.width = '60%', fig.align="center"}
 knitr::include_graphics("header_example.png", error = FALSE)
