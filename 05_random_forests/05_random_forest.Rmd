@@ -619,6 +619,178 @@ legend("bottomright",
 
 - **Model comparison:** Higher AUC $\rightarrow$ better overall ranking ability (e.g., compare Random Forest vs Logistic).
 
+
+
+# Handling class imbalance
+
+## Class Imbalance in Random Forest
+
+### What is Class Imbalance?
+
+Class imbalance occurs when you're predicting a binary outcome where one class is much more common than the other. In labor economics applications, this is extremely common. Consider some of the tasks:
+
+- **Job loss**: Most people keep their jobs (95%) vs. lose them (5%)
+- **Re-employment**: Most unemployed find work (80%) vs. stay unemployed (20%)
+- **Health decline**: Most people maintain health (90%) vs. experience decline (10%)
+
+### Why Does Class Imbalance Matter?
+
+Random Forest (and most ML algorithms) optimize for **overall accuracy**. With severe imbalance, a naive model can achieve high accuracy by simply predicting the majority class every time.
+
+**Example**: Predicting job loss where 5% of workers lose their jobs
+
+```{r}
+# Naive prediction: Everyone keeps their job
+naive_accuracy <- 0.95  # 95% accurate!
+```
+
+But this model is **useless** for your research question - it never identifies anyone at risk of job loss.
+
+### The Problem in Detail
+
+Random Forest with class imbalance tends to:
+
+1. **Predict the majority class almost always** - High accuracy but low predictive power for the rare event
+2. **Underweight minority class** - Trees rarely split on rare outcomes
+3. **Poor variable importance** - Important predictors of rare events may be overlooked
+4. **Misleading performance metrics** - Accuracy looks good but model doesn't work
+
+### Solutions
+
+#### 1. Use Appropriate Metrics
+
+Instead of accuracy, you can use:
+
+- **Balanced accuracy**: Average of sensitivity and specificity
+- **AUC-ROC**: Area under the ROC curve
+- **Precision-Recall AUC**: Better for severe imbalance
+- **F1-score**: Harmonic mean of precision and recall
+
+```{r}
+library(caret)
+library(pROC)
+
+# Calculate multiple metrics
+predictions <- predict(rf_final, data = testData)
+
+# AUC-ROC
+roc_obj <- roc(testData$risk_affine, predictions$predictions[,"1"])
+auc(roc_obj)
+
+pred_class <- ifelse(predictions$predictions[,"1"] > 0.5, "1", "0")
+# Confusion matrix with proper metrics
+confusionMatrix(factor(pred_class, levels = c("0", "1")), testData$risk_affine, positive = "1")
+```
+
+#### 2. Adjust Class Weights
+
+Tell Random Forest that minority class errors are more costly:
+
+```{r}
+library(randomForest)
+
+# Calculate inverse frequency weights
+class_weights <- table(trainData$risk_affine)
+weights <- 1 / class_weights[trainData$risk_affine]
+
+# Weighted Random Forest
+rf_weighted <- randomForest(
+  risk_affine ~ .,
+  data = trainData,
+  classwt = c("0" = 1, "1" = 10),  # 10x weight for job loss
+  ntree = 500
+)
+```
+
+**Rule of thumb**: Set weight ratio approximately equal to the class imbalance ratio.
+
+#### 3. Balance the Training Data
+
+**Downsample the majority class:**
+```{r}
+library(caret)
+
+# Downsample majority class to match minority
+balanced_data <- downSample(
+  x = trainData[, -which(names(trainData) == "risk_affine")],
+  y = trainData$risk_affine,
+  yname = "risk_affine"
+)
+
+rf_downsampled <- randomForest(risk_affine ~ ., data = balanced_data)
+```
+
+**Upsample the minority class:**
+```{r}
+# Oversample minority class with replacement
+balanced_data <- upSample(
+  x = trainData[, -which(names(trainData) == "risk_affine")],
+  y = trainData$risk_affine,
+  yname = "risk_affine"
+)
+```
+
+
+#### 4. Adjust Decision Threshold
+
+Instead of using 0.5 as cutoff, find optimal threshold:
+```{r}
+# Get predicted probabilities
+pred_probs <- predict(rf_final, testData)$predictions[,"1"]
+
+# Try different thresholds
+thresholds <- seq(0.1, 0.9, by = 0.05)
+f1_scores <- sapply(thresholds, function(t) {
+  pred_class <- ifelse(pred_probs > t, 1, 0)
+  # Calculate F1 score
+  # ... (calculation code)
+})
+
+# Use threshold that maximizes F1
+optimal_threshold <- thresholds[which.max(f1_scores)]
+```
+
+### Which Solution Should You Use?
+
+**For your course tasks:**
+
+1. **Report multiple metrics**, not just accuracy
+2. **Try class weights first**, those are probably the simplest solutions
+3. **Consider downsampling**, if your sample is large enough
+4. **Adjust threshold**, when false negatives are costly
+
+**Example workflow:**
+```{r}
+# Step 1: Train with class weights
+rf_weighted <- randomForest(
+  risk_affine ~ .,
+  data = trainData,
+  classwt = c("0" = 1, "1" = 5),
+  ntree = 500
+)
+
+# Step 2: Evaluate with proper metrics
+pred_probs <- predict(rf_weighted, testData, type = "prob")[,2]
+
+# AUC
+auc_score <- auc(roc(testData$risk_affine, pred_probs))
+
+# Precision-Recall
+pr_curve <- PRROC::pr.curve(
+  scores.class0 = pred_probs[testData$risk_affine == 1],
+  scores.class1 = pred_probs[testData$risk_affine == 0]
+)
+
+# Report both
+cat("AUC-ROC:", auc_score, "\n")
+cat("AUC-PR:", pr_curve$auc.integral, "\n")
+```
+
+### Important Notes for Your Tasks
+
+Remember: The goal is not perfect prediction but **understanding which factors matter** and **who is most at risk**. Class imbalance handling helps Random Forest identify these patterns rather than just predicting the majority class.
+
+
 ::: {.task-box}
 # 10 Min Classroom Task 
 
@@ -830,7 +1002,6 @@ p5 <- autoplot(pdp_statistiknote) +
 (p3 | p4 ) /
 ( p5) 
 ```
-
 
 
 # Sources {.unlisted .unnumbered}
